@@ -44,6 +44,7 @@
 
         .input-section {
             margin-bottom: 20px;
+            position: relative;
         }
 
         .emoji-hint {
@@ -51,6 +52,83 @@
             font-size: 0.85rem;
             color: #666;
             font-style: italic;
+        }
+
+        .emoji-button {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: #f0f0f0;
+            border: none;
+            border-radius: 8px;
+            padding: 8px 12px;
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            z-index: 10;
+        }
+
+        .emoji-button:hover {
+            background: #e0e0e0;
+            transform: scale(1.1);
+        }
+
+        .emoji-picker {
+            position: absolute;
+            top: 50px;
+            right: 0;
+            background: white;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            max-width: 300px;
+            max-height: 400px;
+            overflow-y: auto;
+            display: none;
+            z-index: 20;
+        }
+
+        .emoji-picker.active {
+            display: block;
+        }
+
+        .emoji-category {
+            margin-bottom: 15px;
+        }
+
+        .emoji-category-title {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: #666;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+            letter-spacing: 0.5px;
+        }
+
+        .emoji-grid {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 8px;
+        }
+
+        .emoji-item {
+            background: #f8f9fa;
+            border: 2px solid transparent;
+            border-radius: 8px;
+            padding: 10px;
+            font-size: 1.5rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .emoji-item:hover {
+            background: #e9ecef;
+            border-color: #667eea;
+            transform: scale(1.1);
         }
 
         textarea {
@@ -194,6 +272,25 @@
                 placeholder="Type what you want to say here..."
                 maxlength="5000"
             ></textarea>
+            <button class="emoji-button" id="emojiButton" title="Insert emoji">😀</button>
+            <div class="emoji-picker" id="emojiPicker">
+                <div class="emoji-category">
+                    <div class="emoji-category-title">Emotional States</div>
+                    <div class="emoji-grid" id="emotionalStates"></div>
+                </div>
+                <div class="emoji-category">
+                    <div class="emoji-category-title">Reactions</div>
+                    <div class="emoji-grid" id="reactions"></div>
+                </div>
+                <div class="emoji-category">
+                    <div class="emoji-category-title">Cognitive Beats</div>
+                    <div class="emoji-grid" id="cognitiveBeats"></div>
+                </div>
+                <div class="emoji-category">
+                    <div class="emoji-category-title">Tone Cues</div>
+                    <div class="emoji-grid" id="toneCues"></div>
+                </div>
+            </div>
             <div class="emoji-hint">💡 Tip: Use emojis to add emotion tags automatically</div>
         </div>
 
@@ -219,6 +316,8 @@
         const STATUS = document.getElementById('status');
         const AUDIO_SECTION = document.getElementById('audioSection');
         const AUDIO_PLAYER = document.getElementById('audioPlayer');
+        const EMOJI_BUTTON = document.getElementById('emojiButton');
+        const EMOJI_PICKER = document.getElementById('emojiPicker');
 
         // Emoji to ElevenLabs v3 emotion tag mapping
         const emojiToTagMap = {
@@ -247,6 +346,85 @@
             '😜': '[playfully]',
             '😝': '[playfully]'
         };
+
+        // Organize emojis by category for the picker
+        const emojiCategories = {
+            emotionalStates: ['😊', '😢', '😰', '😤', '😌'],
+            reactions: ['😮', '😲', '😂', '😔', '😱', '🤫'],
+            cognitiveBeats: ['⏸️', '🤔', '😶', '😑'],
+            toneCues: ['😄', '😐', '😜', '😝']
+        };
+
+        /**
+         * Inserts emoji at cursor position in textarea
+         */
+        function insertEmojiAtCursor(emoji) {
+            const textarea = TEXT_INPUT;
+            const start = textarea.selectionStart;
+            const end = textarea.selectionEnd;
+            const text = textarea.value;
+            
+            // Insert emoji at cursor position
+            const newText = text.substring(0, start) + emoji + text.substring(end);
+            textarea.value = newText;
+            
+            // Set cursor position after inserted emoji
+            const newCursorPos = start + emoji.length;
+            textarea.setSelectionRange(newCursorPos, newCursorPos);
+            textarea.focus();
+        }
+
+        /**
+         * Populates emoji picker with emojis organized by category
+         */
+        function populateEmojiPicker() {
+            const categoryContainers = {
+                emotionalStates: document.getElementById('emotionalStates'),
+                reactions: document.getElementById('reactions'),
+                cognitiveBeats: document.getElementById('cognitiveBeats'),
+                toneCues: document.getElementById('toneCues')
+            };
+
+            Object.keys(emojiCategories).forEach(category => {
+                const container = categoryContainers[category];
+                const emojis = emojiCategories[category];
+                
+                emojis.forEach(emoji => {
+                    const emojiItem = document.createElement('div');
+                    emojiItem.className = 'emoji-item';
+                    emojiItem.textContent = emoji;
+                    emojiItem.title = emojiToTagMap[emoji] || emoji;
+                    emojiItem.addEventListener('click', () => {
+                        insertEmojiAtCursor(emoji);
+                        EMOJI_PICKER.classList.remove('active');
+                    });
+                    container.appendChild(emojiItem);
+                });
+            });
+        }
+
+        /**
+         * Toggles emoji picker visibility
+         */
+        function toggleEmojiPicker() {
+            EMOJI_PICKER.classList.toggle('active');
+        }
+
+        // Initialize emoji picker
+        populateEmojiPicker();
+
+        // Event listeners for emoji picker
+        EMOJI_BUTTON.addEventListener('click', (e) => {
+            e.stopPropagation();
+            toggleEmojiPicker();
+        });
+
+        // Close picker when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!EMOJI_PICKER.contains(e.target) && e.target !== EMOJI_BUTTON) {
+                EMOJI_PICKER.classList.remove('active');
+            }
+        });
 
         /**
          * Converts emojis in text to ElevenLabs v3 emotion tags
