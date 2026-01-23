@@ -46,6 +46,13 @@
             margin-bottom: 20px;
         }
 
+        .emoji-hint {
+            margin-top: 8px;
+            font-size: 0.85rem;
+            color: #666;
+            font-style: italic;
+        }
+
         textarea {
             width: 100%;
             min-height: 150px;
@@ -187,6 +194,7 @@
                 placeholder="Type what you want to say here..."
                 maxlength="5000"
             ></textarea>
+            <div class="emoji-hint">💡 Tip: Use emojis to add emotion tags automatically</div>
         </div>
 
         <div class="button-group">
@@ -212,6 +220,74 @@
         const AUDIO_SECTION = document.getElementById('audioSection');
         const AUDIO_PLAYER = document.getElementById('audioPlayer');
 
+        // Emoji to ElevenLabs v3 emotion tag mapping
+        const emojiToTagMap = {
+            // Emotional states
+            '😊': '[excited]',
+            '😢': '[sorrowful]',
+            '😰': '[nervous]',
+            '😤': '[frustrated]',
+            '😌': '[calm]',
+            // Reactions
+            '😮': '[gasps]',
+            '😲': '[gasps]',
+            '😂': '[laughs]',
+            '😔': '[sigh]',
+            '😱': '[gulps]',
+            '🤫': '[whispers]',
+            // Cognitive beats
+            '⏸️': '[pauses]',
+            '⏸': '[pauses]',
+            '🤔': '[hesitates]',
+            '😶': '[stammers]',
+            '😑': '[resigned tone]',
+            // Tone cues
+            '😄': '[cheerfully]',
+            '😐': '[flatly]',
+            '😜': '[playfully]',
+            '😝': '[playfully]'
+        };
+
+        /**
+         * Converts emojis in text to ElevenLabs v3 emotion tags
+         * Inserts the tag before the emoji while keeping the emoji
+         * @param {string} text - The input text containing emojis
+         * @returns {string} - Text with emotion tags inserted before emojis
+         */
+        function convertEmojisToTags(text) {
+            // Unicode emoji regex pattern (more comprehensive)
+            const emojiRegex = /[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]|[\u{1F600}-\u{1F64F}]|[\u{1F680}-\u{1F6FF}]/gu;
+            
+            let result = text;
+            const matches = [...text.matchAll(emojiRegex)];
+            
+            if (matches.length === 0) {
+                return text;
+            }
+            
+            // Process emojis in reverse order to maintain correct positions when inserting
+            for (let i = matches.length - 1; i >= 0; i--) {
+                const match = matches[i];
+                const emoji = match[0];
+                const tag = emojiToTagMap[emoji];
+                
+                if (tag) {
+                    const index = match.index;
+                    // Check if tag already exists before this emoji
+                    const beforeEmoji = result.substring(0, index);
+                    const tagPattern = tag.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                    const tagRegex = new RegExp(tagPattern + '\\s*$');
+                    
+                    // Only add tag if it doesn't already exist before the emoji
+                    if (!tagRegex.test(beforeEmoji.trim())) {
+                        result = result.substring(0, index) + tag + ' ' + result.substring(index);
+                    }
+                }
+            }
+            
+            return result;
+        }
+
         function showStatus(message, type) {
             STATUS.textContent = message;
             STATUS.className = `status active ${type}`;
@@ -232,6 +308,9 @@
                 return;
             }
 
+            // Convert emojis to emotion tags
+            const textWithTags = convertEmojisToTags(text);
+
             // Disable button and show loading
             SEND_BTN.disabled = true;
             showStatus('Generating speech...', 'loading');
@@ -243,7 +322,7 @@
                     headers: {
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify({ text: text })
+                    body: JSON.stringify({ text: textWithTags })
                 });
 
                 if (!response.ok) {
