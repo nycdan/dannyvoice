@@ -131,6 +131,90 @@
             transform: scale(1.1);
         }
 
+        .emotion-map {
+            margin-top: 20px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            border: 2px solid #e0e0e0;
+        }
+
+        .emotion-map-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            margin-bottom: 15px;
+        }
+
+        .emotion-map-header h3 {
+            color: #333;
+            font-size: 1.1rem;
+            margin: 0;
+        }
+
+        .emotion-map-toggle {
+            font-size: 1.2rem;
+            color: #667eea;
+            transition: transform 0.3s;
+        }
+
+        .emotion-map-toggle.collapsed {
+            transform: rotate(-90deg);
+        }
+
+        .emotion-map-content {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+
+        .emotion-map-category {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #e0e0e0;
+        }
+
+        .emotion-map-category-title {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #667eea;
+            text-transform: uppercase;
+            margin-bottom: 12px;
+            letter-spacing: 0.5px;
+        }
+
+        .emotion-map-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px;
+            border-radius: 6px;
+            margin-bottom: 6px;
+            transition: background 0.2s;
+            cursor: pointer;
+        }
+
+        .emotion-map-item:hover {
+            background: #f0f0f0;
+        }
+
+        .emotion-map-emoji {
+            font-size: 1.5rem;
+            width: 40px;
+            text-align: center;
+        }
+
+        .emotion-map-tag {
+            font-family: 'Courier New', monospace;
+            font-size: 0.85rem;
+            color: #666;
+            background: #e9ecef;
+            padding: 4px 8px;
+            border-radius: 4px;
+        }
+
         textarea {
             width: 100%;
             min-height: 150px;
@@ -301,6 +385,103 @@
             <button class="clear-btn" id="clearBtn">Clear</button>
         </div>
 
+        <div class="emotion-map">
+            <div class="emotion-map-header" id="emotionMapHeader">
+                <h3>Emotion Map</h3>
+                <span class="emotion-map-toggle" id="emotionMapToggle">▼</span>
+            </div>
+            <div class="emotion-map-content" id="emotionMapContent">
+                <div class="emotion-map-category">
+                    <div class="emotion-map-category-title">Emotional States</div>
+                    <div class="emotion-map-item">
+                        <span class="emotion-map-emoji">😊</span>
+                        <span class="emotion-map-tag">[excited]</span>
+                    </div>
+                    <div class="emotion-map-item">
+                        <span class="emotion-map-emoji">😢</span>
+                        <span class="emotion-map-tag">[sorrowful]</span>
+                    </div>
+                    <div class="emotion-map-item">
+                        <span class="emotion-map-emoji">😰</span>
+                        <span class="emotion-map-tag">[nervous]</span>
+                    </div>
+                    <div class="emotion-map-item">
+                        <span class="emotion-map-emoji">😤</span>
+                        <span class="emotion-map-tag">[frustrated]</span>
+                    </div>
+                    <div class="emotion-map-item">
+                        <span class="emotion-map-emoji">😌</span>
+                        <span class="emotion-map-tag">[calm]</span>
+                    </div>
+                </div>
+                <div class="emotion-map-category">
+                    <div class="emotion-map-category-title">Reactions</div>
+                    <div class="emotion-map-item">
+                        <span class="emotion-map-emoji">😮</span>
+                        <span class="emotion-map-tag">[gasps]</span>
+                    </div>
+                    <div class="emotion-map-item">
+                        <span class="emotion-map-emoji">😲</span>
+                        <span class="emotion-map-tag">[gasps]</span>
+                    </div>
+                    <div class="emotion-map-item">
+                        <span class="emotion-map-emoji">😂</span>
+                        <span class="emotion-map-tag">[laughs]</span>
+                    </div>
+                    <div class="emotion-map-item">
+                        <span class="emotion-map-emoji">😔</span>
+                        <span class="emotion-map-tag">[sigh]</span>
+                    </div>
+                    <div class="emotion-map-item">
+                        <span class="emotion-map-emoji">😱</span>
+                        <span class="emotion-map-tag">[gulps]</span>
+                    </div>
+                    <div class="emotion-map-item">
+                        <span class="emotion-map-emoji">🤫</span>
+                        <span class="emotion-map-tag">[whispers]</span>
+                    </div>
+                </div>
+                <div class="emotion-map-category">
+                    <div class="emotion-map-category-title">Cognitive Beats</div>
+                    <div class="emotion-map-item">
+                        <span class="emotion-map-emoji">⏸️</span>
+                        <span class="emotion-map-tag">[pauses]</span>
+                    </div>
+                    <div class="emotion-map-item">
+                        <span class="emotion-map-emoji">🤔</span>
+                        <span class="emotion-map-tag">[hesitates]</span>
+                    </div>
+                    <div class="emotion-map-item">
+                        <span class="emotion-map-emoji">😶</span>
+                        <span class="emotion-map-tag">[stammers]</span>
+                    </div>
+                    <div class="emotion-map-item">
+                        <span class="emotion-map-emoji">😑</span>
+                        <span class="emotion-map-tag">[resigned tone]</span>
+                    </div>
+                </div>
+                <div class="emotion-map-category">
+                    <div class="emotion-map-category-title">Tone Cues</div>
+                    <div class="emotion-map-item">
+                        <span class="emotion-map-emoji">😄</span>
+                        <span class="emotion-map-tag">[cheerfully]</span>
+                    </div>
+                    <div class="emotion-map-item">
+                        <span class="emotion-map-emoji">😐</span>
+                        <span class="emotion-map-tag">[flatly]</span>
+                    </div>
+                    <div class="emotion-map-item">
+                        <span class="emotion-map-emoji">😜</span>
+                        <span class="emotion-map-tag">[playfully]</span>
+                    </div>
+                    <div class="emotion-map-item">
+                        <span class="emotion-map-emoji">😝</span>
+                        <span class="emotion-map-tag">[playfully]</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <div class="status" id="status"></div>
 
         <div class="audio-section" id="audioSection">
@@ -424,6 +605,34 @@
             if (!EMOJI_PICKER.contains(e.target) && e.target !== EMOJI_BUTTON) {
                 EMOJI_PICKER.classList.remove('active');
             }
+        });
+
+        // Emotion map toggle functionality
+        const EMOTION_MAP_HEADER = document.getElementById('emotionMapHeader');
+        const EMOTION_MAP_CONTENT = document.getElementById('emotionMapContent');
+        const EMOTION_MAP_TOGGLE = document.getElementById('emotionMapToggle');
+        
+        let emotionMapCollapsed = false;
+        
+        EMOTION_MAP_HEADER.addEventListener('click', () => {
+            emotionMapCollapsed = !emotionMapCollapsed;
+            if (emotionMapCollapsed) {
+                EMOTION_MAP_CONTENT.style.display = 'none';
+                EMOTION_MAP_TOGGLE.classList.add('collapsed');
+            } else {
+                EMOTION_MAP_CONTENT.style.display = 'grid';
+                EMOTION_MAP_TOGGLE.classList.remove('collapsed');
+            }
+        });
+
+        // Make emotion map items clickable to insert emojis
+        const emotionMapItems = document.querySelectorAll('.emotion-map-item');
+        emotionMapItems.forEach(item => {
+            item.addEventListener('click', () => {
+                const emoji = item.querySelector('.emotion-map-emoji').textContent;
+                insertEmojiAtCursor(emoji);
+                TEXT_INPUT.focus();
+            });
         });
 
         /**
