@@ -42,35 +42,6 @@
             font-size: 0.9rem;
         }
 
-        .api-key-section {
-            margin-bottom: 25px;
-            padding: 15px;
-            background: #f8f9fa;
-            border-radius: 10px;
-        }
-
-        .api-key-section label {
-            display: block;
-            margin-bottom: 8px;
-            color: #333;
-            font-weight: 500;
-            font-size: 0.9rem;
-        }
-
-        .api-key-section input {
-            width: 100%;
-            padding: 10px;
-            border: 2px solid #e0e0e0;
-            border-radius: 8px;
-            font-size: 0.9rem;
-            transition: border-color 0.3s;
-        }
-
-        .api-key-section input:focus {
-            outline: none;
-            border-color: #667eea;
-        }
-
         .input-section {
             margin-bottom: 20px;
         }
@@ -211,16 +182,6 @@
         <h1>🎤 Text to Speech</h1>
         <p class="subtitle">Convert your text to natural-sounding speech using ElevenLabs</p>
 
-        <div class="api-key-section">
-            <label for="apiKey">ElevenLabs API Key:</label>
-            <input 
-                type="password" 
-                id="apiKey" 
-                placeholder="Enter your ElevenLabs API key"
-                autocomplete="off"
-            >
-        </div>
-
         <div class="input-section">
             <textarea 
                 id="textInput" 
@@ -245,29 +206,12 @@
     </div>
 
     <script>
-        const API_KEY_INPUT = document.getElementById('apiKey');
         const TEXT_INPUT = document.getElementById('textInput');
         const SEND_BTN = document.getElementById('sendBtn');
         const CLEAR_BTN = document.getElementById('clearBtn');
         const STATUS = document.getElementById('status');
         const AUDIO_SECTION = document.getElementById('audioSection');
         const AUDIO_PLAYER = document.getElementById('audioPlayer');
-        
-        const VOICE_ID = 'wFzdaipEHKrAyjK9EKuv';
-        const ELEVENLABS_API_URL = `https://api.elevenlabs.io/v1/text-to-speech/${VOICE_ID}`;
-
-        // Load API key from localStorage if available
-        const savedApiKey = localStorage.getItem('elevenlabs_api_key');
-        if (savedApiKey) {
-            API_KEY_INPUT.value = savedApiKey;
-        }
-
-        // Save API key to localStorage when changed
-        API_KEY_INPUT.addEventListener('blur', () => {
-            if (API_KEY_INPUT.value.trim()) {
-                localStorage.setItem('elevenlabs_api_key', API_KEY_INPUT.value);
-            }
-        });
 
         function showStatus(message, type) {
             STATUS.textContent = message;
@@ -282,13 +226,7 @@
         }
 
         async function convertTextToSpeech() {
-            const apiKey = API_KEY_INPUT.value.trim();
             const text = TEXT_INPUT.value.trim();
-
-            if (!apiKey) {
-                showStatus('Please enter your ElevenLabs API key', 'error');
-                return;
-            }
 
             if (!text) {
                 showStatus('Please enter some text to convert', 'error');
@@ -301,26 +239,17 @@
             AUDIO_SECTION.classList.remove('active');
 
             try {
-                const response = await fetch(ELEVENLABS_API_URL, {
+                const response = await fetch('/api/tts', {
                     method: 'POST',
                     headers: {
-                        'Accept': 'audio/mpeg',
-                        'Content-Type': 'application/json',
-                        'xi-api-key': apiKey
+                        'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify({
-                        text: text,
-                        model_id: 'eleven_monolingual_v1',
-                        voice_settings: {
-                            stability: 0.5,
-                            similarity_boost: 0.75
-                        }
-                    })
+                    body: JSON.stringify({ text: text })
                 });
 
                 if (!response.ok) {
                     const errorData = await response.json().catch(() => ({}));
-                    throw new Error(errorData.detail?.message || `Error: ${response.status} ${response.statusText}`);
+                    throw new Error(errorData.error || `Error: ${response.status} ${response.statusText}`);
                 }
 
                 // Get audio blob
