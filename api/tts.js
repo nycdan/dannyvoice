@@ -41,12 +41,12 @@ export default async function handler(req, res) {
       }
     }
     
-    // Use the voice's default model (don't specify model_id to use voice default)
-    // This should match what the web interface uses
+    // Use eleven_turbo_v3_alpha model for better Hebrew support
     const trimmedText = text.trim();
     
     const requestBody = {
       text: trimmedText,
+      model_id: 'eleven_turbo_v3_alpha',
       voice_settings: voiceSettings
     };
     
