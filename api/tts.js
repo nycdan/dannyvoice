@@ -22,21 +22,24 @@ export default async function handler(req, res) {
   const url = `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`;
 
   try {
+    // Build request body - let voice use its default model for Hebrew
+    // For Hebrew voices, the voice's default model should handle it correctly
+    const requestBody = {
+      text: text.trim(),
+      voice_settings: {
+        stability: 0.5,
+        similarity_boost: 0.75
+      }
+    };
+    
     const response = await fetch(url, {
       method: 'POST',
       headers: {
         'Accept': 'audio/mpeg',
-        'Content-Type': 'application/json',
+        'Content-Type': 'application/json; charset=utf-8',
         'xi-api-key': apiKey
       },
-      body: JSON.stringify({
-        text: text.trim(),
-        model_id: 'eleven_multilingual_v1',
-        voice_settings: {
-          stability: 0.6,
-          similarity_boost: 0.85
-        }
-      })
+      body: JSON.stringify(requestBody)
     });
 
     if (!response.ok) {
