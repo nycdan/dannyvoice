@@ -41,12 +41,12 @@ export default async function handler(req, res) {
       }
     }
     
-    // Use eleven_turbo_v3_alpha model for better Hebrew support
+    // Use eleven_v3 (alpha) model for better Hebrew support
     const trimmedText = text.trim();
     
     const requestBody = {
       text: trimmedText,
-      model_id: 'eleven_turbo_v3_alpha',
+      model_id: 'eleven_v3',
       voice_settings: voiceSettings
     };
     
