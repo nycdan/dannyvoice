@@ -19,24 +19,43 @@ export default async function handler(req, res) {
   }
 
   const voiceId = 'wFzdaipEHKrAyjK9EKuv';
-  const url = `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`;
-
+  
   try {
-    // Build request body - let voice use its default model for Hebrew
-    // For Hebrew voices, the voice's default model should handle it correctly
-    const requestBody = {
-      text: text.trim(),
-      voice_settings: {
-        stability: 0.5,
-        similarity_boost: 0.75
+    // First, get voice settings to match web interface defaults
+    const voiceUrl = `https://api.elevenlabs.io/v1/voices/${voiceId}`;
+    const voiceResponse = await fetch(voiceUrl, {
+      headers: {
+        'xi-api-key': apiKey
       }
+    });
+    
+    let voiceSettings = {
+      stability: 0.5,
+      similarity_boost: 0.75
     };
     
+    if (voiceResponse.ok) {
+      const voiceData = await voiceResponse.json();
+      if (voiceData.settings) {
+        voiceSettings = voiceData.settings;
+      }
+    }
+    
+    // Use the voice's default model (don't specify model_id to use voice default)
+    // This should match what the web interface uses
+    const trimmedText = text.trim();
+    
+    const requestBody = {
+      text: trimmedText,
+      voice_settings: voiceSettings
+    };
+    
+    const url = `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`;
     const response = await fetch(url, {
       method: 'POST',
       headers: {
         'Accept': 'audio/mpeg',
-        'Content-Type': 'application/json; charset=utf-8',
+        'Content-Type': 'application/json',
         'xi-api-key': apiKey
       },
       body: JSON.stringify(requestBody)
