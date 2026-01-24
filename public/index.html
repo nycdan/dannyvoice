@@ -75,8 +75,9 @@
 
         .emoji-button {
             position: absolute;
-            bottom: 15px;
+            bottom: 15px !important;
             right: 15px;
+            top: auto !important;
             background: #f0f0f0;
             border: none;
             border-radius: 8px;
@@ -1026,9 +1027,9 @@
                     
                     // Check if files can be shared
                     const shareData = {
-                        files: [file],
-                        title: 'Danny Voice Audio',
-                        text: 'Check out this audio generated with Danny Voice!'
+                            files: [file],
+                            title: 'Danny Voice Audio',
+                            text: 'Check out this audio generated with Danny Voice!'
                     };
                     
                     // Check if sharing is supported
@@ -1044,9 +1045,9 @@
                     // Share the file
                     await navigator.share(shareData);
                     await logToVercel('info', 'PWA Debug: Share successful!');
-                    showStatus('Shared successfully!', 'success');
-                    setTimeout(hideStatus, 2000);
-                    return;
+                        showStatus('Shared successfully!', 'success');
+                        setTimeout(hideStatus, 2000);
+                        return;
                     
                 } catch (error) {
                     // User cancelled - don't show error
