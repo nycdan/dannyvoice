@@ -179,6 +179,65 @@
             transform: rotate(-90deg);
         }
 
+        .install-prompt {
+            margin-bottom: 20px;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 10px;
+            color: white;
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+            display: none;
+        }
+
+        .install-prompt-content {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 15px;
+        }
+
+        .install-prompt-content span {
+            flex: 1;
+            font-weight: 500;
+        }
+
+        .install-btn {
+            padding: 10px 20px;
+            background: white;
+            color: #667eea;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .install-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .install-close {
+            background: transparent;
+            border: none;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            padding: 0;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: background 0.3s;
+            line-height: 1;
+        }
+
+        .install-close:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
         .emotion-map-content {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
@@ -408,6 +467,14 @@
 <body>
     <div class="container">
         <h1>Danny Voice 1.0</h1>
+
+        <div class="install-prompt" id="installPrompt">
+            <div class="install-prompt-content">
+                <span>Install Danny Voice as an app</span>
+                <button class="install-btn" id="installBtn">Install</button>
+                <button class="install-close" id="installClose">×</button>
+            </div>
+        </div>
 
         <div class="input-section">
             <textarea 
@@ -911,6 +978,52 @@
                     });
             });
         }
+
+        // PWA Install Prompt
+        let deferredPrompt;
+        const INSTALL_PROMPT = document.getElementById('installPrompt');
+        const INSTALL_BTN = document.getElementById('installBtn');
+        const INSTALL_CLOSE = document.getElementById('installClose');
+
+        // Listen for the beforeinstallprompt event
+        window.addEventListener('beforeinstallprompt', (e) => {
+            // Prevent the mini-infobar from appearing
+            e.preventDefault();
+            // Stash the event so it can be triggered later
+            deferredPrompt = e;
+            // Show the install button
+            INSTALL_PROMPT.style.display = 'block';
+        });
+
+        // Handle install button click
+        INSTALL_BTN.addEventListener('click', async () => {
+            if (!deferredPrompt) return;
+            
+            // Show the install prompt
+            deferredPrompt.prompt();
+            
+            // Wait for the user to respond
+            const { outcome } = await deferredPrompt.userChoice;
+            console.log(`User response to install prompt: ${outcome}`);
+            
+            // Clear the deferredPrompt
+            deferredPrompt = null;
+            
+            // Hide the install prompt
+            INSTALL_PROMPT.style.display = 'none';
+        });
+
+        // Handle close button
+        INSTALL_CLOSE.addEventListener('click', () => {
+            INSTALL_PROMPT.style.display = 'none';
+        });
+
+        // If app is already installed, hide the prompt
+        window.addEventListener('appinstalled', () => {
+            INSTALL_PROMPT.style.display = 'none';
+            deferredPrompt = null;
+            console.log('PWA was installed');
+        });
     </script>
 </body>
 </html>
