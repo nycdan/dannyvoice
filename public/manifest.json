@@ -3,10 +3,13 @@
   "short_name": "Danny Voice",
   "description": "Text to speech with emotion tags using ElevenLabs",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
   "background_color": "#667eea",
   "theme_color": "#667eea",
   "orientation": "portrait",
+  "dir": "ltr",
+  "lang": "en",
   "icons": [
     {
       "src": "/DANNY192.png",

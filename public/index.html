@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Danny Voice 1.0</title>
     
     <!-- PWA Meta Tags -->
@@ -12,6 +12,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Danny Voice">
+    <meta name="format-detection" content="telephone=no">
     
     <!-- Manifest -->
     <link rel="manifest" href="/manifest.json">
@@ -1017,14 +1018,16 @@
         // Register Service Worker for PWA
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('/sw.js')
+                navigator.serviceWorker.register('/sw.js', { scope: '/' })
                     .then((reg) => {
-                        console.log('Service Worker registered successfully:', reg.scope);
+                        console.log('PWA Debug: Service Worker registered successfully:', reg.scope);
                     })
                     .catch((err) => {
-                        console.log('Service Worker registration failed:', err);
+                        console.error('PWA Debug: Service Worker registration failed:', err);
                     });
             });
+        } else {
+            console.log('PWA Debug: Service Workers not supported');
         }
 
         // Verify manifest is accessible
@@ -1121,31 +1124,49 @@
         const IOS_INSTALL_PROMPT = document.getElementById('iosInstallPrompt');
         const IOS_CLOSE = document.getElementById('iosClose');
 
-        // Detect iOS
+        // Detect iOS (including iPad on iOS 13+)
         function isIOS() {
-            return /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+            const ua = navigator.userAgent || navigator.vendor || window.opera;
+            return /iPad|iPhone|iPod/.test(ua) || 
+                   (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
         }
 
         // Detect if already installed (standalone mode)
         function isStandalone() {
             return window.matchMedia('(display-mode: standalone)').matches ||
-                   window.navigator.standalone === true;
+                   window.navigator.standalone === true ||
+                   document.referrer.includes('android-app://');
         }
 
         // Show iOS install prompt if on iOS and not already installed
-        if (isIOS() && !isStandalone()) {
-            // Check if user has dismissed it before (using localStorage)
-            const iosPromptDismissed = localStorage.getItem('ios-install-prompt-dismissed');
-            if (!iosPromptDismissed) {
-                IOS_INSTALL_PROMPT.style.display = 'block';
+        function showIOSPrompt() {
+            if (isIOS() && !isStandalone()) {
+                // Check if user has dismissed it before (using sessionStorage for this session)
+                const iosPromptDismissed = sessionStorage.getItem('ios-install-prompt-dismissed');
+                if (!iosPromptDismissed) {
+                    console.log('PWA Debug: Showing iOS install prompt');
+                    IOS_INSTALL_PROMPT.style.display = 'block';
+                } else {
+                    console.log('PWA Debug: iOS prompt was dismissed this session');
+                }
+            } else {
+                console.log('PWA Debug: Not iOS or already installed', {
+                    isIOS: isIOS(),
+                    isStandalone: isStandalone()
+                });
             }
         }
 
+        // Show prompt after a short delay to ensure page is loaded
+        setTimeout(showIOSPrompt, 1000);
+
         // Handle iOS close button
-        IOS_CLOSE.addEventListener('click', () => {
-            IOS_INSTALL_PROMPT.style.display = 'none';
-            localStorage.setItem('ios-install-prompt-dismissed', 'true');
-        });
+        if (IOS_CLOSE) {
+            IOS_CLOSE.addEventListener('click', () => {
+                IOS_INSTALL_PROMPT.style.display = 'none';
+                sessionStorage.setItem('ios-install-prompt-dismissed', 'true');
+            });
+        }
     </script>
 </body>
 </html>
