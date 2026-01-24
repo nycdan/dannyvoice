@@ -979,21 +979,65 @@
             });
         }
 
+        // Verify manifest is accessible
+        fetch('/manifest.json')
+            .then(response => {
+                if (response.ok) {
+                    console.log('PWA Debug: Manifest.json is accessible');
+                    return response.json();
+                } else {
+                    console.error('PWA Debug: Manifest.json not found (404)');
+                }
+            })
+            .then(manifest => {
+                if (manifest) {
+                    console.log('PWA Debug: Manifest loaded:', manifest);
+                    console.log('PWA Debug: Icons:', manifest.icons);
+                }
+            })
+            .catch(err => {
+                console.error('PWA Debug: Error loading manifest:', err);
+            });
+
         // PWA Install Prompt
         let deferredPrompt;
         const INSTALL_PROMPT = document.getElementById('installPrompt');
         const INSTALL_BTN = document.getElementById('installBtn');
         const INSTALL_CLOSE = document.getElementById('installClose');
 
+        // Debug: Log installability status
+        console.log('PWA Debug: Checking installability...');
+        console.log('Service Worker support:', 'serviceWorker' in navigator);
+        console.log('Manifest link:', document.querySelector('link[rel="manifest"]')?.href);
+
         // Listen for the beforeinstallprompt event
         window.addEventListener('beforeinstallprompt', (e) => {
+            console.log('PWA Debug: beforeinstallprompt event fired!');
             // Prevent the mini-infobar from appearing
             e.preventDefault();
             // Stash the event so it can be triggered later
             deferredPrompt = e;
             // Show the install button
             INSTALL_PROMPT.style.display = 'block';
+            console.log('PWA Debug: Install prompt shown');
         });
+
+        // Debug: Check if app is already installed
+        if (window.matchMedia('(display-mode: standalone)').matches) {
+            console.log('PWA Debug: App is already installed');
+            INSTALL_PROMPT.style.display = 'none';
+        }
+
+        // Debug: Log if beforeinstallprompt never fires (after 3 seconds)
+        setTimeout(() => {
+            if (!deferredPrompt) {
+                console.log('PWA Debug: beforeinstallprompt did not fire. Possible reasons:');
+                console.log('- App may already be installed');
+                console.log('- Manifest or service worker issues');
+                console.log('- Chrome installability criteria not met');
+                console.log('Check: chrome://flags/#enable-desktop-pwas');
+            }
+        }, 3000);
 
         // Handle install button click
         INSTALL_BTN.addEventListener('click', async () => {
