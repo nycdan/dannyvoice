@@ -668,7 +668,7 @@
         const EMOTION_MAP_CONTENT = document.getElementById('emotionMapContent');
         const EMOTION_MAP_TOGGLE = document.getElementById('emotionMapToggle');
         
-        let emotionMapCollapsed = false;
+        let emotionMapCollapsed = true;
         
         EMOTION_MAP_HEADER.addEventListener('click', () => {
             emotionMapCollapsed = !emotionMapCollapsed;
@@ -680,6 +680,10 @@
                 EMOTION_MAP_TOGGLE.classList.remove('collapsed');
             }
         });
+
+        // Initialize emotion map as closed
+        EMOTION_MAP_CONTENT.style.display = 'none';
+        EMOTION_MAP_TOGGLE.classList.add('collapsed');
 
         // Make emotion map items clickable to insert emojis
         const emotionMapItems = document.querySelectorAll('.emotion-map-item');
