@@ -1,0 +1,1073 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Danny Voice 1.0</title>
+    
+    <!-- PWA Meta Tags -->
+    <meta name="theme-color" content="#667eea">
+    <meta name="description" content="Text to speech with emotion tags using ElevenLabs">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Danny Voice">
+    
+    <!-- Manifest -->
+    <link rel="manifest" href="/manifest.json">
+    
+    <!-- Icons -->
+    <link rel="icon" type="image/png" sizes="192x192" href="/DANNY192.png">
+    <link rel="icon" type="image/png" sizes="512x512" href="/DANNY512.png">
+    <link rel="apple-touch-icon" href="/DANNY192.png">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            padding: 40px;
+            max-width: 600px;
+            width: 100%;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 2rem;
+        }
+
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 0.9rem;
+        }
+
+        .input-section {
+            margin-bottom: 20px;
+            position: relative;
+        }
+
+        .emoji-hint {
+            margin-top: 8px;
+            font-size: 0.85rem;
+            color: #666;
+            font-style: italic;
+        }
+
+        .emoji-button {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: #f0f0f0;
+            border: none;
+            border-radius: 8px;
+            padding: 8px 12px;
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            z-index: 10;
+        }
+
+        .emoji-button:hover {
+            background: #e0e0e0;
+            transform: scale(1.1);
+        }
+
+        .emoji-picker {
+            position: absolute;
+            top: 50px;
+            right: 0;
+            background: white;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            max-width: 300px;
+            max-height: 400px;
+            overflow-y: auto;
+            display: none;
+            z-index: 20;
+        }
+
+        .emoji-picker.active {
+            display: block;
+        }
+
+        .emoji-category {
+            margin-bottom: 15px;
+        }
+
+        .emoji-category-title {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: #666;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+            letter-spacing: 0.5px;
+        }
+
+        .emoji-grid {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 8px;
+        }
+
+        .emoji-item {
+            background: #f8f9fa;
+            border: 2px solid transparent;
+            border-radius: 8px;
+            padding: 10px;
+            font-size: 1.5rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .emoji-item:hover {
+            background: #e9ecef;
+            border-color: #667eea;
+            transform: scale(1.1);
+        }
+
+        .emotion-map {
+            margin-top: 20px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            border: 2px solid #e0e0e0;
+        }
+
+        .emotion-map-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            margin-bottom: 15px;
+        }
+
+        .emotion-map-header h3 {
+            color: #333;
+            font-size: 1.1rem;
+            margin: 0;
+        }
+
+        .emotion-map-toggle {
+            font-size: 1.2rem;
+            color: #667eea;
+            transition: transform 0.3s;
+        }
+
+        .emotion-map-toggle.collapsed {
+            transform: rotate(-90deg);
+        }
+
+        .install-prompt {
+            margin-bottom: 20px;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 10px;
+            color: white;
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+            display: none;
+        }
+
+        .install-prompt-content {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 15px;
+        }
+
+        .install-prompt-content span {
+            flex: 1;
+            font-weight: 500;
+        }
+
+        .install-btn {
+            padding: 10px 20px;
+            background: white;
+            color: #667eea;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .install-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .install-close {
+            background: transparent;
+            border: none;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            padding: 0;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: background 0.3s;
+            line-height: 1;
+        }
+
+        .install-close:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .emotion-map-content {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+
+        .emotion-map-category {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #e0e0e0;
+        }
+
+        .emotion-map-category-title {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #667eea;
+            text-transform: uppercase;
+            margin-bottom: 12px;
+            letter-spacing: 0.5px;
+        }
+
+        .emotion-map-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px;
+            border-radius: 6px;
+            margin-bottom: 6px;
+            transition: background 0.2s;
+            cursor: pointer;
+        }
+
+        .emotion-map-item:hover {
+            background: #f0f0f0;
+        }
+
+        .emotion-map-emoji {
+            font-size: 1.5rem;
+            width: 40px;
+            text-align: center;
+        }
+
+        .emotion-map-tag {
+            font-family: 'Courier New', monospace;
+            font-size: 0.85rem;
+            color: #666;
+            background: #e9ecef;
+            padding: 4px 8px;
+            border-radius: 4px;
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 150px;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-family: inherit;
+            resize: vertical;
+            transition: border-color 0.3s;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        button {
+            flex: 1;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .send-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .send-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .send-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .clear-btn {
+            background: #f0f0f0;
+            color: #333;
+        }
+
+        .clear-btn:hover {
+            background: #e0e0e0;
+        }
+
+        .audio-section {
+            margin-top: 20px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            display: none;
+        }
+
+        .audio-section.active {
+            display: block;
+        }
+
+        .audio-section h3 {
+            margin-bottom: 15px;
+            color: #333;
+            font-size: 1.1rem;
+        }
+
+        audio {
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        .audio-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .download-btn, .share-btn {
+            flex: 1;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .download-btn {
+            background: #28a745;
+            color: white;
+        }
+
+        .download-btn:hover {
+            background: #218838;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(40, 167, 69, 0.3);
+        }
+
+        .share-btn {
+            background: #25D366;
+            color: white;
+        }
+
+        .share-btn:hover {
+            background: #20BA5A;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(37, 211, 102, 0.3);
+        }
+
+        .status {
+            margin-top: 15px;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            display: none;
+        }
+
+        .status.active {
+            display: block;
+        }
+
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .status.loading {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid #0c5460;
+            border-top-color: transparent;
+            border-radius: 50%;
+            animation: spin 0.6s linear infinite;
+            margin-right: 8px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Danny Voice 1.0</h1>
+
+        <div class="install-prompt" id="installPrompt">
+            <div class="install-prompt-content">
+                <span>Install Danny Voice as an app</span>
+                <button class="install-btn" id="installBtn">Install</button>
+                <button class="install-close" id="installClose">×</button>
+            </div>
+        </div>
+
+        <div class="input-section">
+            <textarea 
+                id="textInput" 
+                placeholder="Type what you want to say here..."
+                maxlength="5000"
+            ></textarea>
+            <button class="emoji-button" id="emojiButton" title="Insert emoji">😀</button>
+            <div class="emoji-picker" id="emojiPicker">
+                <div class="emoji-category">
+                    <div class="emoji-category-title">Emotional States</div>
+                    <div class="emoji-grid" id="emotionalStates"></div>
+                </div>
+                <div class="emoji-category">
+                    <div class="emoji-category-title">Reactions</div>
+                    <div class="emoji-grid" id="reactions"></div>
+                </div>
+                <div class="emoji-category">
+                    <div class="emoji-category-title">Cognitive Beats</div>
+                    <div class="emoji-grid" id="cognitiveBeats"></div>
+                </div>
+                <div class="emoji-category">
+                    <div class="emoji-category-title">Tone Cues</div>
+                    <div class="emoji-grid" id="toneCues"></div>
+                </div>
+            </div>
+            <div class="emoji-hint">💡 Tip: Use emojis to add emotion tags automatically</div>
+        </div>
+
+        <div class="button-group">
+            <button class="send-btn" id="sendBtn">
+                <span>Send</span>
+            </button>
+            <button class="clear-btn" id="clearBtn">Clear</button>
+        </div>
+
+        <div class="emotion-map">
+            <div class="emotion-map-header" id="emotionMapHeader">
+                <h3>Emotion Map</h3>
+                <span class="emotion-map-toggle" id="emotionMapToggle">▼</span>
+            </div>
+            <div class="emotion-map-content" id="emotionMapContent">
+                <div class="emotion-map-category">
+                    <div class="emotion-map-category-title">Emotional States</div>
+                    <div class="emotion-map-item">
+                        <span class="emotion-map-emoji">😊</span>
+                        <span class="emotion-map-tag">[excited]</span>
+                    </div>
+                    <div class="emotion-map-item">
+                        <span class="emotion-map-emoji">😢</span>
+                        <span class="emotion-map-tag">[sorrowful]</span>
+                    </div>
+                    <div class="emotion-map-item">
+                        <span class="emotion-map-emoji">😰</span>
+                        <span class="emotion-map-tag">[nervous]</span>
+                    </div>
+                    <div class="emotion-map-item">
+                        <span class="emotion-map-emoji">😤</span>
+                        <span class="emotion-map-tag">[frustrated]</span>
+                    </div>
+                    <div class="emotion-map-item">
+                        <span class="emotion-map-emoji">😌</span>
+                        <span class="emotion-map-tag">[calm]</span>
+                    </div>
+                </div>
+                <div class="emotion-map-category">
+                    <div class="emotion-map-category-title">Reactions</div>
+                    <div class="emotion-map-item">
+                        <span class="emotion-map-emoji">😮</span>
+                        <span class="emotion-map-tag">[gasps]</span>
+                    </div>
+                    <div class="emotion-map-item">
+                        <span class="emotion-map-emoji">😲</span>
+                        <span class="emotion-map-tag">[gasps]</span>
+                    </div>
+                    <div class="emotion-map-item">
+                        <span class="emotion-map-emoji">😂</span>
+                        <span class="emotion-map-tag">[laughs]</span>
+                    </div>
+                    <div class="emotion-map-item">
+                        <span class="emotion-map-emoji">😔</span>
+                        <span class="emotion-map-tag">[sigh]</span>
+                    </div>
+                    <div class="emotion-map-item">
+                        <span class="emotion-map-emoji">😱</span>
+                        <span class="emotion-map-tag">[gulps]</span>
+                    </div>
+                    <div class="emotion-map-item">
+                        <span class="emotion-map-emoji">🤫</span>
+                        <span class="emotion-map-tag">[whispers]</span>
+                    </div>
+                </div>
+                <div class="emotion-map-category">
+                    <div class="emotion-map-category-title">Cognitive Beats</div>
+                    <div class="emotion-map-item">
+                        <span class="emotion-map-emoji">⏸️</span>
+                        <span class="emotion-map-tag">[pauses]</span>
+                    </div>
+                    <div class="emotion-map-item">
+                        <span class="emotion-map-emoji">🤔</span>
+                        <span class="emotion-map-tag">[hesitates]</span>
+                    </div>
+                    <div class="emotion-map-item">
+                        <span class="emotion-map-emoji">😶</span>
+                        <span class="emotion-map-tag">[stammers]</span>
+                    </div>
+                    <div class="emotion-map-item">
+                        <span class="emotion-map-emoji">😑</span>
+                        <span class="emotion-map-tag">[resigned tone]</span>
+                    </div>
+                </div>
+                <div class="emotion-map-category">
+                    <div class="emotion-map-category-title">Tone Cues</div>
+                    <div class="emotion-map-item">
+                        <span class="emotion-map-emoji">😄</span>
+                        <span class="emotion-map-tag">[cheerfully]</span>
+                    </div>
+                    <div class="emotion-map-item">
+                        <span class="emotion-map-emoji">😐</span>
+                        <span class="emotion-map-tag">[flatly]</span>
+                    </div>
+                    <div class="emotion-map-item">
+                        <span class="emotion-map-emoji">😜</span>
+                        <span class="emotion-map-tag">[playfully]</span>
+                    </div>
+                    <div class="emotion-map-item">
+                        <span class="emotion-map-emoji">😝</span>
+                        <span class="emotion-map-tag">[playfully]</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="status" id="status"></div>
+
+        <div class="audio-section" id="audioSection">
+            <h3>Generated Audio:</h3>
+            <audio id="audioPlayer" controls></audio>
+            <div class="audio-actions">
+                <button class="download-btn" id="downloadBtn">
+                    <span>📥 Download</span>
+                </button>
+                <button class="share-btn" id="shareBtn">
+                    <span>📤 Share to WhatsApp</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const TEXT_INPUT = document.getElementById('textInput');
+        const SEND_BTN = document.getElementById('sendBtn');
+        const CLEAR_BTN = document.getElementById('clearBtn');
+        const STATUS = document.getElementById('status');
+        const AUDIO_SECTION = document.getElementById('audioSection');
+        const AUDIO_PLAYER = document.getElementById('audioPlayer');
+        const EMOJI_BUTTON = document.getElementById('emojiButton');
+        const EMOJI_PICKER = document.getElementById('emojiPicker');
+        const DOWNLOAD_BTN = document.getElementById('downloadBtn');
+        const SHARE_BTN = document.getElementById('shareBtn');
+        
+        // Store current audio blob for download/share
+        let currentAudioBlob = null;
+
+        // Emoji to ElevenLabs v3 emotion tag mapping
+        const emojiToTagMap = {
+            // Emotional states
+            '😊': '[excited]',
+            '😢': '[sorrowful]',
+            '😰': '[nervous]',
+            '😤': '[frustrated]',
+            '😌': '[calm]',
+            // Reactions
+            '😮': '[gasps]',
+            '😲': '[gasps]',
+            '😂': '[laughs]',
+            '😔': '[sigh]',
+            '😱': '[gulps]',
+            '🤫': '[whispers]',
+            // Cognitive beats
+            '⏸️': '[pauses]',
+            '⏸': '[pauses]',
+            '🤔': '[hesitates]',
+            '😶': '[stammers]',
+            '😑': '[resigned tone]',
+            // Tone cues
+            '😄': '[cheerfully]',
+            '😐': '[flatly]',
+            '😜': '[playfully]',
+            '😝': '[playfully]'
+        };
+
+        // Organize emojis by category for the picker
+        const emojiCategories = {
+            emotionalStates: ['😊', '😢', '😰', '😤', '😌'],
+            reactions: ['😮', '😲', '😂', '😔', '😱', '🤫'],
+            cognitiveBeats: ['⏸️', '🤔', '😶', '😑'],
+            toneCues: ['😄', '😐', '😜', '😝']
+        };
+
+        /**
+         * Inserts emoji at cursor position in textarea
+         */
+        function insertEmojiAtCursor(emoji) {
+            const textarea = TEXT_INPUT;
+            const start = textarea.selectionStart;
+            const end = textarea.selectionEnd;
+            const text = textarea.value;
+            
+            // Insert emoji at cursor position
+            const newText = text.substring(0, start) + emoji + text.substring(end);
+            textarea.value = newText;
+            
+            // Set cursor position after inserted emoji
+            const newCursorPos = start + emoji.length;
+            textarea.setSelectionRange(newCursorPos, newCursorPos);
+            textarea.focus();
+        }
+
+        /**
+         * Populates emoji picker with emojis organized by category
+         */
+        function populateEmojiPicker() {
+            const categoryContainers = {
+                emotionalStates: document.getElementById('emotionalStates'),
+                reactions: document.getElementById('reactions'),
+                cognitiveBeats: document.getElementById('cognitiveBeats'),
+                toneCues: document.getElementById('toneCues')
+            };
+
+            Object.keys(emojiCategories).forEach(category => {
+                const container = categoryContainers[category];
+                const emojis = emojiCategories[category];
+                
+                emojis.forEach(emoji => {
+                    const emojiItem = document.createElement('div');
+                    emojiItem.className = 'emoji-item';
+                    emojiItem.textContent = emoji;
+                    emojiItem.title = emojiToTagMap[emoji] || emoji;
+                    emojiItem.addEventListener('click', () => {
+                        insertEmojiAtCursor(emoji);
+                        EMOJI_PICKER.classList.remove('active');
+                    });
+                    container.appendChild(emojiItem);
+                });
+            });
+        }
+
+        /**
+         * Toggles emoji picker visibility
+         */
+        function toggleEmojiPicker() {
+            EMOJI_PICKER.classList.toggle('active');
+        }
+
+        // Initialize emoji picker
+        populateEmojiPicker();
+
+        // Event listeners for emoji picker
+        EMOJI_BUTTON.addEventListener('click', (e) => {
+            e.stopPropagation();
+            toggleEmojiPicker();
+        });
+
+        // Close picker when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!EMOJI_PICKER.contains(e.target) && e.target !== EMOJI_BUTTON) {
+                EMOJI_PICKER.classList.remove('active');
+            }
+        });
+
+        // Emotion map toggle functionality
+        const EMOTION_MAP_HEADER = document.getElementById('emotionMapHeader');
+        const EMOTION_MAP_CONTENT = document.getElementById('emotionMapContent');
+        const EMOTION_MAP_TOGGLE = document.getElementById('emotionMapToggle');
+        
+        let emotionMapCollapsed = true;
+        
+        EMOTION_MAP_HEADER.addEventListener('click', () => {
+            emotionMapCollapsed = !emotionMapCollapsed;
+            if (emotionMapCollapsed) {
+                EMOTION_MAP_CONTENT.style.display = 'none';
+                EMOTION_MAP_TOGGLE.classList.add('collapsed');
+            } else {
+                EMOTION_MAP_CONTENT.style.display = 'grid';
+                EMOTION_MAP_TOGGLE.classList.remove('collapsed');
+            }
+        });
+
+        // Initialize emotion map as closed
+        EMOTION_MAP_CONTENT.style.display = 'none';
+        EMOTION_MAP_TOGGLE.classList.add('collapsed');
+
+        // Make emotion map items clickable to insert emojis
+        const emotionMapItems = document.querySelectorAll('.emotion-map-item');
+        emotionMapItems.forEach(item => {
+            item.addEventListener('click', () => {
+                const emoji = item.querySelector('.emotion-map-emoji').textContent;
+                insertEmojiAtCursor(emoji);
+                TEXT_INPUT.focus();
+            });
+        });
+
+        /**
+         * Converts emojis in text to ElevenLabs v3 emotion tags
+         * Inserts the tag before the emoji while keeping the emoji
+         * @param {string} text - The input text containing emojis
+         * @returns {string} - Text with emotion tags inserted before emojis
+         */
+        function convertEmojisToTags(text) {
+            // Unicode emoji regex pattern (more comprehensive)
+            const emojiRegex = /[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]|[\u{1F600}-\u{1F64F}]|[\u{1F680}-\u{1F6FF}]/gu;
+            
+            let result = text;
+            const matches = [...text.matchAll(emojiRegex)];
+            
+            if (matches.length === 0) {
+                return text;
+            }
+            
+            // Process emojis in reverse order to maintain correct positions when inserting
+            for (let i = matches.length - 1; i >= 0; i--) {
+                const match = matches[i];
+                const emoji = match[0];
+                const tag = emojiToTagMap[emoji];
+                
+                if (tag) {
+                    const index = match.index;
+                    // Check if tag already exists before this emoji
+                    const beforeEmoji = result.substring(0, index);
+                    const tagPattern = tag.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                    const tagRegex = new RegExp(tagPattern + '\\s*$');
+                    
+                    // Only add tag if it doesn't already exist before the emoji
+                    if (!tagRegex.test(beforeEmoji.trim())) {
+                        result = result.substring(0, index) + tag + ' ' + result.substring(index);
+                    }
+                }
+            }
+            
+            return result;
+        }
+
+        function showStatus(message, type) {
+            STATUS.textContent = message;
+            STATUS.className = `status active ${type}`;
+            if (type === 'loading') {
+                STATUS.innerHTML = `<span class="loading-spinner"></span>${message}`;
+            }
+        }
+
+        function hideStatus() {
+            STATUS.className = 'status';
+        }
+
+        async function convertTextToSpeech() {
+            const text = TEXT_INPUT.value.trim();
+
+            if (!text) {
+                showStatus('Please enter some text to convert', 'error');
+                return;
+            }
+
+            // Convert emojis to emotion tags
+            const textWithTags = convertEmojisToTags(text);
+
+            // Disable button and show loading
+            SEND_BTN.disabled = true;
+            showStatus('Generating speech...', 'loading');
+            AUDIO_SECTION.classList.remove('active');
+
+            try {
+                const response = await fetch('/api/tts', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ text: textWithTags })
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({}));
+                    throw new Error(errorData.error || `Error: ${response.status} ${response.statusText}`);
+                }
+
+                // Get audio blob
+                const audioBlob = await response.blob();
+                const audioUrl = URL.createObjectURL(audioBlob);
+                
+                // Store blob for download/share
+                currentAudioBlob = audioBlob;
+                
+                // Set audio source and show player
+                AUDIO_PLAYER.src = audioUrl;
+                AUDIO_SECTION.classList.add('active');
+                showStatus('Audio generated successfully!', 'success');
+                
+                // Auto-play the audio
+                AUDIO_PLAYER.play().catch(err => {
+                    console.log('Auto-play prevented:', err);
+                });
+
+            } catch (error) {
+                console.error('Error:', error);
+                showStatus(`Error: ${error.message}`, 'error');
+            } finally {
+                SEND_BTN.disabled = false;
+            }
+        }
+
+        function clearText() {
+            TEXT_INPUT.value = '';
+            AUDIO_SECTION.classList.remove('active');
+            hideStatus();
+            TEXT_INPUT.focus();
+        }
+
+        // Event listeners
+        SEND_BTN.addEventListener('click', convertTextToSpeech);
+        CLEAR_BTN.addEventListener('click', clearText);
+
+        // Allow Enter key to send (with Shift+Enter for new line)
+        TEXT_INPUT.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                convertTextToSpeech();
+            }
+        });
+
+        // Download button functionality
+        DOWNLOAD_BTN.addEventListener('click', () => {
+            if (currentAudioBlob) {
+                const url = URL.createObjectURL(currentAudioBlob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'danny-voice-audio.mp3';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                showStatus('Audio downloaded!', 'success');
+                setTimeout(hideStatus, 2000);
+            }
+        });
+
+        // Share to WhatsApp button functionality
+        SHARE_BTN.addEventListener('click', async () => {
+            if (!currentAudioBlob) return;
+            
+            // Check if Web Share API is available (mobile)
+            if (navigator.share && navigator.canShare) {
+                try {
+                    const file = new File([currentAudioBlob], 'danny-voice-audio.mp3', { type: 'audio/mpeg' });
+                    if (navigator.canShare({ files: [file] })) {
+                        await navigator.share({
+                            files: [file],
+                            title: 'Danny Voice Audio',
+                            text: 'Check out this audio generated with Danny Voice!'
+                        });
+                        showStatus('Shared successfully!', 'success');
+                        setTimeout(hideStatus, 2000);
+                        return;
+                    }
+                } catch (error) {
+                    if (error.name !== 'AbortError') {
+                        console.log('Share failed:', error);
+                    }
+                }
+            }
+            
+            // Fallback: Download and open WhatsApp Web
+            const url = URL.createObjectURL(currentAudioBlob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'danny-voice-audio.mp3';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            // Open WhatsApp Web
+            showStatus('File downloaded! Opening WhatsApp...', 'success');
+            setTimeout(() => {
+                window.open('https://web.whatsapp.com', '_blank');
+                hideStatus();
+            }, 1000);
+        });
+
+        // Focus on text input when page loads
+        TEXT_INPUT.focus();
+
+        // Register Service Worker for PWA
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                    .then((reg) => {
+                        console.log('Service Worker registered successfully:', reg.scope);
+                    })
+                    .catch((err) => {
+                        console.log('Service Worker registration failed:', err);
+                    });
+            });
+        }
+
+        // Verify manifest is accessible
+        fetch('/manifest.json')
+            .then(response => {
+                if (response.ok) {
+                    console.log('PWA Debug: Manifest.json is accessible');
+                    return response.json();
+                } else {
+                    console.error('PWA Debug: Manifest.json not found (404)');
+                }
+            })
+            .then(manifest => {
+                if (manifest) {
+                    console.log('PWA Debug: Manifest loaded:', manifest);
+                    console.log('PWA Debug: Icons:', manifest.icons);
+                }
+            })
+            .catch(err => {
+                console.error('PWA Debug: Error loading manifest:', err);
+            });
+
+        // PWA Install Prompt
+        let deferredPrompt;
+        const INSTALL_PROMPT = document.getElementById('installPrompt');
+        const INSTALL_BTN = document.getElementById('installBtn');
+        const INSTALL_CLOSE = document.getElementById('installClose');
+
+        // Debug: Log installability status
+        console.log('PWA Debug: Checking installability...');
+        console.log('Service Worker support:', 'serviceWorker' in navigator);
+        console.log('Manifest link:', document.querySelector('link[rel="manifest"]')?.href);
+
+        // Listen for the beforeinstallprompt event
+        window.addEventListener('beforeinstallprompt', (e) => {
+            console.log('PWA Debug: beforeinstallprompt event fired!');
+            // Prevent the mini-infobar from appearing
+            e.preventDefault();
+            // Stash the event so it can be triggered later
+            deferredPrompt = e;
+            // Show the install button
+            INSTALL_PROMPT.style.display = 'block';
+            console.log('PWA Debug: Install prompt shown');
+        });
+
+        // Debug: Check if app is already installed
+        if (window.matchMedia('(display-mode: standalone)').matches) {
+            console.log('PWA Debug: App is already installed');
+            INSTALL_PROMPT.style.display = 'none';
+        }
+
+        // Debug: Log if beforeinstallprompt never fires (after 3 seconds)
+        setTimeout(() => {
+            if (!deferredPrompt) {
+                console.log('PWA Debug: beforeinstallprompt did not fire. Possible reasons:');
+                console.log('- App may already be installed');
+                console.log('- Manifest or service worker issues');
+                console.log('- Chrome installability criteria not met');
+                console.log('Check: chrome://flags/#enable-desktop-pwas');
+            }
+        }, 3000);
+
+        // Handle install button click
+        INSTALL_BTN.addEventListener('click', async () => {
+            if (!deferredPrompt) return;
+            
+            // Show the install prompt
+            deferredPrompt.prompt();
+            
+            // Wait for the user to respond
+            const { outcome } = await deferredPrompt.userChoice;
+            console.log(`User response to install prompt: ${outcome}`);
+            
+            // Clear the deferredPrompt
+            deferredPrompt = null;
+            
+            // Hide the install prompt
+            INSTALL_PROMPT.style.display = 'none';
+        });
+
+        // Handle close button
+        INSTALL_CLOSE.addEventListener('click', () => {
+            INSTALL_PROMPT.style.display = 'none';
+        });
+
+        // If app is already installed, hide the prompt
+        window.addEventListener('appinstalled', () => {
+            INSTALL_PROMPT.style.display = 'none';
+            deferredPrompt = null;
+            console.log('PWA was installed');
+        });
+    </script>
+</body>
+</html>
