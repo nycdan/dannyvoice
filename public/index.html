@@ -971,30 +971,68 @@
 
         // Share to WhatsApp button functionality
         SHARE_BTN.addEventListener('click', async () => {
-            if (!currentAudioBlob) return;
+            if (!currentAudioBlob) {
+                showStatus('No audio to share. Please generate audio first.', 'error');
+                return;
+            }
             
-            // Check if Web Share API is available (mobile)
-            if (navigator.share && navigator.canShare) {
+            // Primary path: Web Share API with File object
+            // This directly attaches the audio file to WhatsApp from the share sheet
+            if (navigator.share) {
                 try {
-                    const file = new File([currentAudioBlob], 'danny-voice-audio.mp3', { type: 'audio/mpeg' });
-                    if (navigator.canShare({ files: [file] })) {
-                        await navigator.share({
-                            files: [file],
-                            title: 'Danny Voice Audio',
-                            text: 'Check out this audio generated with Danny Voice!'
-                        });
-                        showStatus('Shared successfully!', 'success');
-                        setTimeout(hideStatus, 2000);
+                    // Create File object from blob
+                    const file = new File([currentAudioBlob], 'danny-voice-audio.mp3', { 
+                        type: 'audio/mpeg',
+                        lastModified: Date.now()
+                    });
+                    
+                    // Check if files can be shared
+                    const shareData = {
+                        files: [file],
+                        title: 'Danny Voice Audio',
+                        text: 'Check out this audio generated with Danny Voice!'
+                    };
+                    
+                    // Check if sharing is supported
+                    if (navigator.canShare && !navigator.canShare(shareData)) {
+                        throw new Error('File sharing not supported');
+                    }
+                    
+                    // Share the file
+                    await navigator.share(shareData);
+                    showStatus('Shared successfully!', 'success');
+                    setTimeout(hideStatus, 2000);
+                    return;
+                    
+                } catch (error) {
+                    // User cancelled - don't show error
+                    if (error.name === 'AbortError') {
                         return;
                     }
-                } catch (error) {
-                    if (error.name !== 'AbortError') {
-                        console.log('Share failed:', error);
+                    
+                    // Log error for debugging
+                    console.error('Web Share API error:', error);
+                    
+                    // If file sharing failed, try sharing without file (text only)
+                    try {
+                        await navigator.share({
+                            title: 'Danny Voice Audio',
+                            text: 'Check out this audio! Download it from Danny Voice app.'
+                        });
+                        showStatus('Shared! Please download and attach the audio file.', 'success');
+                        setTimeout(hideStatus, 3000);
+                        return;
+                    } catch (textShareError) {
+                        if (textShareError.name !== 'AbortError') {
+                            console.error('Text share also failed:', textShareError);
+                        }
                     }
                 }
             }
             
-            // Fallback: Download and open WhatsApp Web
+            // Fallback: Only if Web Share API is completely unavailable
+            // Download the file for manual sharing
+            showStatus('Web Share not available. Downloading file...', 'loading');
             const url = URL.createObjectURL(currentAudioBlob);
             const a = document.createElement('a');
             a.href = url;
@@ -1004,12 +1042,8 @@
             document.body.removeChild(a);
             URL.revokeObjectURL(url);
             
-            // Open WhatsApp Web
-            showStatus('File downloaded! Opening WhatsApp...', 'success');
-            setTimeout(() => {
-                window.open('https://web.whatsapp.com', '_blank');
-                hideStatus();
-            }, 1000);
+            showStatus('File downloaded! You can now share it manually.', 'success');
+            setTimeout(hideStatus, 3000);
         });
 
         // Focus on text input when page loads
