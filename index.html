@@ -300,6 +300,49 @@
             margin-top: 10px;
         }
 
+        .audio-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .download-btn, .share-btn {
+            flex: 1;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .download-btn {
+            background: #28a745;
+            color: white;
+        }
+
+        .download-btn:hover {
+            background: #218838;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(40, 167, 69, 0.3);
+        }
+
+        .share-btn {
+            background: #25D366;
+            color: white;
+        }
+
+        .share-btn:hover {
+            background: #20BA5A;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(37, 211, 102, 0.3);
+        }
+
         .status {
             margin-top: 15px;
             padding: 12px;
@@ -487,6 +530,14 @@
         <div class="audio-section" id="audioSection">
             <h3>Generated Audio:</h3>
             <audio id="audioPlayer" controls></audio>
+            <div class="audio-actions">
+                <button class="download-btn" id="downloadBtn">
+                    <span>📥 Download</span>
+                </button>
+                <button class="share-btn" id="shareBtn">
+                    <span>📤 Share to WhatsApp</span>
+                </button>
+            </div>
         </div>
     </div>
 
@@ -499,6 +550,11 @@
         const AUDIO_PLAYER = document.getElementById('audioPlayer');
         const EMOJI_BUTTON = document.getElementById('emojiButton');
         const EMOJI_PICKER = document.getElementById('emojiPicker');
+        const DOWNLOAD_BTN = document.getElementById('downloadBtn');
+        const SHARE_BTN = document.getElementById('shareBtn');
+        
+        // Store current audio blob for download/share
+        let currentAudioBlob = null;
 
         // Emoji to ElevenLabs v3 emotion tag mapping
         const emojiToTagMap = {
@@ -721,6 +777,9 @@
                 const audioBlob = await response.blob();
                 const audioUrl = URL.createObjectURL(audioBlob);
                 
+                // Store blob for download/share
+                currentAudioBlob = audioBlob;
+                
                 // Set audio source and show player
                 AUDIO_PLAYER.src = audioUrl;
                 AUDIO_SECTION.classList.add('active');
@@ -756,6 +815,65 @@
                 e.preventDefault();
                 convertTextToSpeech();
             }
+        });
+
+        // Download button functionality
+        DOWNLOAD_BTN.addEventListener('click', () => {
+            if (currentAudioBlob) {
+                const url = URL.createObjectURL(currentAudioBlob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'danny-voice-audio.mp3';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                showStatus('Audio downloaded!', 'success');
+                setTimeout(hideStatus, 2000);
+            }
+        });
+
+        // Share to WhatsApp button functionality
+        SHARE_BTN.addEventListener('click', async () => {
+            if (!currentAudioBlob) return;
+            
+            // Check if Web Share API is available (mobile)
+            if (navigator.share && navigator.canShare) {
+                try {
+                    const file = new File([currentAudioBlob], 'danny-voice-audio.mp3', { type: 'audio/mpeg' });
+                    if (navigator.canShare({ files: [file] })) {
+                        await navigator.share({
+                            files: [file],
+                            title: 'Danny Voice Audio',
+                            text: 'Check out this audio generated with Danny Voice!'
+                        });
+                        showStatus('Shared successfully!', 'success');
+                        setTimeout(hideStatus, 2000);
+                        return;
+                    }
+                } catch (error) {
+                    if (error.name !== 'AbortError') {
+                        console.log('Share failed:', error);
+                    }
+                }
+            }
+            
+            // Fallback: Download and open WhatsApp Web
+            const url = URL.createObjectURL(currentAudioBlob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'danny-voice-audio.mp3';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            // Open WhatsApp Web
+            showStatus('File downloaded! Opening WhatsApp...', 'success');
+            setTimeout(() => {
+                window.open('https://web.whatsapp.com', '_blank');
+                hideStatus();
+            }, 1000);
         });
 
         // Focus on text input when page loads
