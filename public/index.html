@@ -19,7 +19,9 @@
     <!-- Icons -->
     <link rel="icon" type="image/png" sizes="192x192" href="/DANNY192.png">
     <link rel="icon" type="image/png" sizes="512x512" href="/DANNY512.png">
-    <link rel="apple-touch-icon" href="/DANNY192.png">
+    <link rel="apple-touch-icon" href="/DANNY512.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/DANNY512.png">
+    <link rel="apple-touch-icon" sizes="512x512" href="/DANNY512.png">
     <style>
         * {
             margin: 0;
@@ -235,6 +237,50 @@
         }
 
         .install-close:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .ios-install-prompt {
+            margin-bottom: 20px;
+            padding: 15px;
+            background: linear-gradient(135deg, #25D366 0%, #20BA5A 100%);
+            border-radius: 10px;
+            color: white;
+            box-shadow: 0 5px 15px rgba(37, 211, 102, 0.3);
+            display: none;
+        }
+
+        .ios-install-content {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 15px;
+        }
+
+        .ios-install-content span {
+            flex: 1;
+            font-weight: 500;
+            font-size: 0.95rem;
+        }
+
+        .ios-close {
+            background: transparent;
+            border: none;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            padding: 0;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: background 0.3s;
+            line-height: 1;
+        }
+
+        .ios-close:hover {
             background: rgba(255, 255, 255, 0.2);
         }
 
@@ -473,6 +519,13 @@
                 <span>Install Danny Voice as an app</span>
                 <button class="install-btn" id="installBtn">Install</button>
                 <button class="install-close" id="installClose">×</button>
+            </div>
+        </div>
+
+        <div class="ios-install-prompt" id="iosInstallPrompt">
+            <div class="ios-install-content">
+                <span>📱 Add to Home Screen: Tap Share → Add to Home Screen</span>
+                <button class="ios-close" id="iosClose">×</button>
             </div>
         </div>
 
@@ -1067,6 +1120,36 @@
             INSTALL_PROMPT.style.display = 'none';
             deferredPrompt = null;
             console.log('PWA was installed');
+        });
+
+        // iOS Install Prompt
+        const IOS_INSTALL_PROMPT = document.getElementById('iosInstallPrompt');
+        const IOS_CLOSE = document.getElementById('iosClose');
+
+        // Detect iOS
+        function isIOS() {
+            return /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+        }
+
+        // Detect if already installed (standalone mode)
+        function isStandalone() {
+            return window.matchMedia('(display-mode: standalone)').matches ||
+                   window.navigator.standalone === true;
+        }
+
+        // Show iOS install prompt if on iOS and not already installed
+        if (isIOS() && !isStandalone()) {
+            // Check if user has dismissed it before (using localStorage)
+            const iosPromptDismissed = localStorage.getItem('ios-install-prompt-dismissed');
+            if (!iosPromptDismissed) {
+                IOS_INSTALL_PROMPT.style.display = 'block';
+            }
+        }
+
+        // Handle iOS close button
+        IOS_CLOSE.addEventListener('click', () => {
+            IOS_INSTALL_PROMPT.style.display = 'none';
+            localStorage.setItem('ios-install-prompt-dismissed', 'true');
         });
     </script>
 </body>
