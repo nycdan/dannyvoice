@@ -696,6 +696,38 @@
         // Store current audio blob for download/share
         let currentAudioBlob = null;
 
+        // Logging function to send logs to Vercel
+        async function logToVercel(level, message, data = null) {
+            // Log to browser console
+            if (level === 'error') {
+                console.error(message, data);
+            } else {
+                console.log(message, data);
+            }
+            
+            // Send to Vercel logs
+            try {
+                await fetch('/api/log', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        level: level,
+                        message: message,
+                        data: data,
+                        userAgent: navigator.userAgent,
+                        timestamp: new Date().toISOString()
+                    })
+                }).catch(err => {
+                    // Silently fail if logging endpoint is unavailable
+                    console.log('Failed to send log to Vercel:', err);
+                });
+            } catch (err) {
+                // Silently fail
+            }
+        }
+
         // Emoji to ElevenLabs v3 emotion tag mapping
         const emojiToTagMap = {
             // Emotional states
@@ -986,7 +1018,7 @@
                         lastModified: Date.now()
                     });
                     
-                    console.log('PWA Debug: File created:', {
+                    await logToVercel('info', 'PWA Debug: File created', {
                         name: file.name,
                         size: file.size,
                         type: file.type
@@ -1002,16 +1034,16 @@
                     // Check if sharing is supported
                     if (navigator.canShare) {
                         const canShare = navigator.canShare(shareData);
-                        console.log('PWA Debug: canShare result:', canShare);
+                        await logToVercel('info', 'PWA Debug: canShare result', { canShare });
                         if (!canShare) {
                             throw new Error('File sharing not supported by browser');
                         }
                     }
                     
-                    console.log('PWA Debug: Attempting to share file...');
+                    await logToVercel('info', 'PWA Debug: Attempting to share file');
                     // Share the file
                     await navigator.share(shareData);
-                    console.log('PWA Debug: Share successful!');
+                    await logToVercel('info', 'PWA Debug: Share successful!');
                     showStatus('Shared successfully!', 'success');
                     setTimeout(hideStatus, 2000);
                     return;
@@ -1019,13 +1051,12 @@
                 } catch (error) {
                     // User cancelled - don't show error
                     if (error.name === 'AbortError') {
-                        console.log('PWA Debug: User cancelled share');
+                        await logToVercel('info', 'PWA Debug: User cancelled share');
                         return;
                     }
                     
                     // Log error for debugging
-                    console.error('PWA Debug: Web Share API error:', error);
-                    console.error('PWA Debug: Error details:', {
+                    await logToVercel('error', 'PWA Debug: Web Share API error', {
                         name: error.name,
                         message: error.message,
                         stack: error.stack
@@ -1038,7 +1069,7 @@
                     // User can manually share the downloaded file
                 }
             } else {
-                console.log('PWA Debug: navigator.share not available');
+                await logToVercel('info', 'PWA Debug: navigator.share not available');
                 showStatus('Web Share not available. Downloading file...', 'loading');
             }
             
@@ -1065,34 +1096,33 @@
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('/sw.js', { scope: '/' })
                     .then((reg) => {
-                        console.log('PWA Debug: Service Worker registered successfully:', reg.scope);
+                        logToVercel('info', 'PWA Debug: Service Worker registered successfully', { scope: reg.scope });
                     })
                     .catch((err) => {
-                        console.error('PWA Debug: Service Worker registration failed:', err);
+                        logToVercel('error', 'PWA Debug: Service Worker registration failed', { error: err.message });
                     });
             });
         } else {
-            console.log('PWA Debug: Service Workers not supported');
+            logToVercel('info', 'PWA Debug: Service Workers not supported');
         }
 
         // Verify manifest is accessible
         fetch('/manifest.json')
             .then(response => {
                 if (response.ok) {
-                    console.log('PWA Debug: Manifest.json is accessible');
+                    logToVercel('info', 'PWA Debug: Manifest.json is accessible');
                     return response.json();
                 } else {
-                    console.error('PWA Debug: Manifest.json not found (404)');
+                    logToVercel('error', 'PWA Debug: Manifest.json not found (404)');
                 }
             })
             .then(manifest => {
                 if (manifest) {
-                    console.log('PWA Debug: Manifest loaded:', manifest);
-                    console.log('PWA Debug: Icons:', manifest.icons);
+                    logToVercel('info', 'PWA Debug: Manifest loaded', { manifest, icons: manifest.icons });
                 }
             })
             .catch(err => {
-                console.error('PWA Debug: Error loading manifest:', err);
+                logToVercel('error', 'PWA Debug: Error loading manifest', { error: err.message });
             });
 
         // PWA Install Prompt
@@ -1102,36 +1132,39 @@
         const INSTALL_CLOSE = document.getElementById('installClose');
 
         // Debug: Log installability status
-        console.log('PWA Debug: Checking installability...');
-        console.log('Service Worker support:', 'serviceWorker' in navigator);
-        console.log('Manifest link:', document.querySelector('link[rel="manifest"]')?.href);
+        logToVercel('info', 'PWA Debug: Checking installability', {
+            serviceWorkerSupport: 'serviceWorker' in navigator,
+            manifestLink: document.querySelector('link[rel="manifest"]')?.href
+        });
 
         // Listen for the beforeinstallprompt event
         window.addEventListener('beforeinstallprompt', (e) => {
-            console.log('PWA Debug: beforeinstallprompt event fired!');
+            logToVercel('info', 'PWA Debug: beforeinstallprompt event fired!');
             // Prevent the mini-infobar from appearing
             e.preventDefault();
             // Stash the event so it can be triggered later
             deferredPrompt = e;
             // Show the install button
             INSTALL_PROMPT.style.display = 'block';
-            console.log('PWA Debug: Install prompt shown');
+            logToVercel('info', 'PWA Debug: Install prompt shown');
         });
 
         // Debug: Check if app is already installed
         if (window.matchMedia('(display-mode: standalone)').matches) {
-            console.log('PWA Debug: App is already installed');
+            logToVercel('info', 'PWA Debug: App is already installed');
             INSTALL_PROMPT.style.display = 'none';
         }
 
         // Debug: Log if beforeinstallprompt never fires (after 3 seconds)
         setTimeout(() => {
             if (!deferredPrompt) {
-                console.log('PWA Debug: beforeinstallprompt did not fire. Possible reasons:');
-                console.log('- App may already be installed');
-                console.log('- Manifest or service worker issues');
-                console.log('- Chrome installability criteria not met');
-                console.log('Check: chrome://flags/#enable-desktop-pwas');
+                logToVercel('info', 'PWA Debug: beforeinstallprompt did not fire', {
+                    reasons: [
+                        'App may already be installed',
+                        'Manifest or service worker issues',
+                        'Chrome installability criteria not met'
+                    ]
+                });
             }
         }, 3000);
 
@@ -1162,7 +1195,7 @@
         window.addEventListener('appinstalled', () => {
             INSTALL_PROMPT.style.display = 'none';
             deferredPrompt = null;
-            console.log('PWA was installed');
+            logToVercel('info', 'PWA was installed');
         });
 
         // iOS Install Prompt
@@ -1189,13 +1222,13 @@
                 // Check if user has dismissed it before (using sessionStorage for this session)
                 const iosPromptDismissed = sessionStorage.getItem('ios-install-prompt-dismissed');
                 if (!iosPromptDismissed) {
-                    console.log('PWA Debug: Showing iOS install prompt');
+                    logToVercel('info', 'PWA Debug: Showing iOS install prompt');
                     IOS_INSTALL_PROMPT.style.display = 'block';
                 } else {
-                    console.log('PWA Debug: iOS prompt was dismissed this session');
+                    logToVercel('info', 'PWA Debug: iOS prompt was dismissed this session');
                 }
             } else {
-                console.log('PWA Debug: Not iOS or already installed', {
+                logToVercel('info', 'PWA Debug: Not iOS or already installed', {
                     isIOS: isIOS(),
                     isStandalone: isStandalone()
                 });
