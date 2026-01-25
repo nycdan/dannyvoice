@@ -64,6 +64,8 @@
         .input-section {
             margin-bottom: 20px;
             position: relative;
+            display: flex;
+            flex-direction: column;
         }
 
         .emoji-hint {
@@ -76,8 +78,9 @@
         .emoji-button {
             position: absolute;
             bottom: 15px !important;
-            right: 15px;
+            right: 15px !important;
             top: auto !important;
+            left: auto !important;
             background: #f0f0f0;
             border: none;
             border-radius: 8px;
@@ -341,7 +344,7 @@
         textarea {
             width: 100%;
             min-height: 300px;
-            padding: 15px;
+            padding: 15px 50px 50px 15px;
             border: 2px solid #e0e0e0;
             border-radius: 10px;
             font-size: 1.25rem;
@@ -512,6 +515,14 @@
 
         @keyframes spin {
             to { transform: rotate(360deg); }
+        }
+
+        /* Ensure emoji button is always at bottom on all devices */
+        @media (max-width: 768px) {
+            .emoji-button {
+                bottom: 15px !important;
+                top: auto !important;
+            }
         }
     </style>
 </head>
@@ -1027,9 +1038,9 @@
                     
                     // Check if files can be shared
                     const shareData = {
-                            files: [file],
-                            title: 'Danny Voice Audio',
-                            text: 'Check out this audio generated with Danny Voice!'
+                        files: [file],
+                        title: 'Danny Voice Audio',
+                        text: 'Check out this audio generated with Danny Voice!'
                     };
                     
                     // Check if sharing is supported
@@ -1045,9 +1056,9 @@
                     // Share the file
                     await navigator.share(shareData);
                     await logToVercel('info', 'PWA Debug: Share successful!');
-                        showStatus('Shared successfully!', 'success');
-                        setTimeout(hideStatus, 2000);
-                        return;
+                    showStatus('Shared successfully!', 'success');
+                    setTimeout(hideStatus, 2000);
+                    return;
                     
                 } catch (error) {
                     // User cancelled - don't show error
