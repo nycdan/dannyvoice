@@ -53,13 +53,46 @@ The application uses the voice ID: `wFzdaipEHKrAyjK9EKuv`
 - The audio will be generated and played automatically
 - Use "Clear" to reset the text input
 
+## Generating Soundboard Audio Files
+
+To generate the preset audio files for the soundboard:
+
+1. Make sure you have Node.js 18+ installed (for fetch API support)
+2. Set your ElevenLabs API key as an environment variable:
+   ```bash
+   export ELEVENLABS_API_KEY=your_api_key_here
+   ```
+3. Run the generation script:
+   ```bash
+   node generate-soundboard.js
+   ```
+4. The audio files will be saved to the `public/` directory
+
+The script will generate 10 audio files:
+- hi-how-are-you.mp3
+- good-morning.mp3
+- please-come-here.mp3
+- i-need-help.mp3
+- please.mp3
+- i-love-you.mp3
+- im-hungry.mp3
+- im-thirsty.mp3
+- im-tired.mp3
+- im-cold.mp3
+
 ## Project Structure
 
 ```
 .
 ├── api/
+│   ├── log.js          # Logging endpoint
 │   └── tts.js          # Serverless function for ElevenLabs API
-├── index.html          # Main application UI
+├── public/
+│   ├── index.html      # Main application UI
+│   ├── manifest.json   # PWA manifest
+│   ├── sw.js          # Service worker
+│   └── *.mp3          # Soundboard audio files (generated)
+├── generate-soundboard.js  # Script to generate soundboard audio files
 └── README.md           # This file
 ```
 

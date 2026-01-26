@@ -154,6 +154,83 @@
             transform: scale(1.1);
         }
 
+        .soundboard {
+            margin-top: 20px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            border: 2px solid #e0e0e0;
+        }
+
+        .soundboard-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            margin-bottom: 15px;
+        }
+
+        .soundboard-header h3 {
+            color: #333;
+            font-size: 1.1rem;
+            margin: 0;
+        }
+
+        .soundboard-toggle {
+            font-size: 1.2rem;
+            color: #667eea;
+            transition: transform 0.3s;
+        }
+
+        .soundboard-toggle.collapsed {
+            transform: rotate(-90deg);
+        }
+
+        .soundboard-content {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 12px;
+        }
+
+        .soundboard-chip {
+            padding: 12px 18px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 25px;
+            font-size: 0.95rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .soundboard-chip:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .soundboard-chip:active {
+            transform: translateY(0);
+        }
+
+        .soundboard-chip.playing {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.8;
+            }
+        }
+
         .emotion-map {
             margin-top: 20px;
             padding: 20px;
@@ -580,6 +657,25 @@
             <button class="clear-btn" id="clearBtn">Clear</button>
         </div>
 
+        <div class="soundboard">
+            <div class="soundboard-header" id="soundboardHeader">
+                <h3>Soundboard</h3>
+                <span class="soundboard-toggle" id="soundboardToggle">▼</span>
+            </div>
+            <div class="soundboard-content" id="soundboardContent">
+                <button class="soundboard-chip" data-phrase="hi-how-are-you">Hi how are you?</button>
+                <button class="soundboard-chip" data-phrase="good-morning">Good morning!</button>
+                <button class="soundboard-chip" data-phrase="please-come-here">Please come here</button>
+                <button class="soundboard-chip" data-phrase="i-need-help">I need help</button>
+                <button class="soundboard-chip" data-phrase="please">Please</button>
+                <button class="soundboard-chip" data-phrase="i-love-you">I love you</button>
+                <button class="soundboard-chip" data-phrase="im-hungry">I'm hungry</button>
+                <button class="soundboard-chip" data-phrase="im-thirsty">I'm thirsty</button>
+                <button class="soundboard-chip" data-phrase="im-tired">I'm tired</button>
+                <button class="soundboard-chip" data-phrase="im-cold">I'm cold</button>
+            </div>
+        </div>
+
         <div class="emotion-map">
             <div class="emotion-map-header" id="emotionMapHeader">
                 <h3>Emotion Map</h3>
@@ -846,6 +942,124 @@
                 EMOJI_PICKER.classList.remove('active');
             }
         });
+
+        // Soundboard functionality
+        const SOUNDBOARD_HEADER = document.getElementById('soundboardHeader');
+        const SOUNDBOARD_CONTENT = document.getElementById('soundboardContent');
+        const SOUNDBOARD_TOGGLE = document.getElementById('soundboardToggle');
+        
+        let soundboardCollapsed = true;
+        let currentPlayingAudio = null;
+        let currentPlayingChip = null;
+        
+        // Soundboard phrases mapping
+        const soundboardPhrases = {
+            'hi-how-are-you': 'hi-how-are-you.mp3',
+            'good-morning': 'good-morning.mp3',
+            'please-come-here': 'please-come-here.mp3',
+            'i-need-help': 'i-need-help.mp3',
+            'please': 'please.mp3',
+            'i-love-you': 'i-love-you.mp3',
+            'im-hungry': 'im-hungry.mp3',
+            'im-thirsty': 'im-thirsty.mp3',
+            'im-tired': 'im-tired.mp3',
+            'im-cold': 'im-cold.mp3'
+        };
+        
+        // Play soundboard audio
+        function playSoundboardAudio(phrase) {
+            const audioFile = soundboardPhrases[phrase];
+            if (!audioFile) {
+                console.error('Audio file not found for phrase:', phrase);
+                return;
+            }
+            
+            // If same chip is clicked, stop the audio
+            if (currentPlayingChip && currentPlayingChip.dataset.phrase === phrase && currentPlayingAudio) {
+                currentPlayingAudio.pause();
+                currentPlayingAudio.currentTime = 0;
+                currentPlayingChip.classList.remove('playing');
+                currentPlayingAudio = null;
+                currentPlayingChip = null;
+                return;
+            }
+            
+            // Stop any currently playing audio
+            if (currentPlayingAudio) {
+                currentPlayingAudio.pause();
+                currentPlayingAudio.currentTime = 0;
+                if (currentPlayingChip) {
+                    currentPlayingChip.classList.remove('playing');
+                }
+            }
+            
+            // Create new audio object
+            const audio = new Audio(`/${audioFile}`);
+            currentPlayingAudio = audio;
+            currentPlayingChip = document.querySelector(`[data-phrase="${phrase}"]`);
+            
+            // Add visual feedback
+            if (currentPlayingChip) {
+                currentPlayingChip.classList.add('playing');
+            }
+            
+            // Handle audio events
+            audio.onended = () => {
+                if (currentPlayingChip) {
+                    currentPlayingChip.classList.remove('playing');
+                }
+                currentPlayingAudio = null;
+                currentPlayingChip = null;
+            };
+            
+            audio.onerror = (error) => {
+                console.error('Error playing audio:', error);
+                if (currentPlayingChip) {
+                    currentPlayingChip.classList.remove('playing');
+                }
+                currentPlayingAudio = null;
+                currentPlayingChip = null;
+                showStatus('Error: Audio file not found', 'error');
+                setTimeout(hideStatus, 3000);
+            };
+            
+            // Play the audio
+            audio.play().catch(error => {
+                console.error('Error playing audio:', error);
+                if (currentPlayingChip) {
+                    currentPlayingChip.classList.remove('playing');
+                }
+                currentPlayingAudio = null;
+                currentPlayingChip = null;
+                showStatus('Error playing audio', 'error');
+                setTimeout(hideStatus, 3000);
+            });
+        }
+        
+        // Add event listeners to soundboard chips
+        const soundboardChips = document.querySelectorAll('.soundboard-chip');
+        soundboardChips.forEach(chip => {
+            chip.addEventListener('click', () => {
+                const phrase = chip.dataset.phrase;
+                playSoundboardAudio(phrase);
+            });
+        });
+        
+        // Soundboard toggle functionality
+        SOUNDBOARD_HEADER.addEventListener('click', () => {
+            soundboardCollapsed = !soundboardCollapsed;
+            if (soundboardCollapsed) {
+                SOUNDBOARD_CONTENT.style.display = 'none';
+                SOUNDBOARD_TOGGLE.classList.add('collapsed');
+            } else {
+                SOUNDBOARD_CONTENT.style.display = 'grid';
+                SOUNDBOARD_TOGGLE.classList.remove('collapsed');
+            }
+        });
+        
+        // Initialize soundboard as collapsed
+        SOUNDBOARD_CONTENT.style.display = 'none';
+        SOUNDBOARD_TOGGLE.classList.add('collapsed');
 
         // Emotion map toggle functionality
         const EMOTION_MAP_HEADER = document.getElementById('emotionMapHeader');
