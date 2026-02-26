@@ -1251,6 +1251,11 @@
                     .replace(/'/g, '&apos;');
             }
 
+            function wrapHebrewInLang(str) {
+                if (!str) return str;
+                return str.replace(/[\u0590-\u05FF]+/g, (match) => `<lang xml:lang="he-il">${match}</lang>`);
+            }
+
             const tagToSSML = {
                 'excited': (t) => `<prosody rate="120%" pitch="+1st">${t}</prosody>`,
                 'sorrowful': (t) => `<prosody rate="85%" pitch="-1st" volume="soft">${t}</prosody>`,
@@ -1272,7 +1277,8 @@
             };
 
             const parts = merged.map(({ text, tag }) => {
-                const escaped = escapeXml(text);
+                let escaped = escapeXml(text);
+                escaped = wrapHebrewInLang(escaped);
                 if (tag === null) return escaped;
                 const fn = tagToSSML[tag];
                 if (!fn) return escaped;
