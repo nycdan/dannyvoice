@@ -113,8 +113,7 @@ async function handleResemble(req, res, text) {
       body: JSON.stringify({
         voice_uuid: voiceUuid,
         data: text,
-        output_format: 'mp3',
-        model: 'chatterbox-turbo'
+        output_format: 'mp3'
       })
     });
 
