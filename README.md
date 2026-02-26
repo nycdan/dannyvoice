@@ -1,13 +1,13 @@
 # Danny Voice
 
-A beautiful single-page web application that converts text to speech using Resemble AI (2.0) or ElevenLabs (1.0) with a specific voice. Deployed on Vercel with secure serverless functions.
+A beautiful single-page web application that converts text to speech using Resemble AI (2.0), FineVoice (2.1), or ElevenLabs (1.0) with a specific voice. Deployed on Vercel with secure serverless functions.
 
 ## Features
 
 - 🎤 Clean, modern UI with gradient design
 - 📝 Text input with character limit (5000 characters)
-- 🔄 Version toggle: Danny 2.0 (Resemble) by default, switch to 1.0 (ElevenLabs)
-- 😀 Emoji-to-emotion tags for expressive speech (works with both providers)
+- 🔄 Version toggle: Danny 2.0 (Resemble) by default, switch to 2.1 (FineVoice) or 1.0 (ElevenLabs)
+- 😀 Emoji-to-emotion tags for expressive speech (works with all providers)
 - 🔐 Secure API key storage via Vercel environment variables
 - 🔊 Audio playback with auto-play
 - ⚡ Real-time status updates
@@ -26,6 +26,9 @@ A beautiful single-page web application that converts text to speech using Resem
    RESEMBLE_API_KEY=your_resemble_api_key_here
    RESEMBLE_VOICE_UUID=your_resemble_voice_uuid_here
 
+   # Required for Danny 2.1 (FineVoice)
+   FINEVOICE_API_KEY=your_finevoice_api_key_here
+
    # Required for Danny 1.0 (ElevenLabs)
    ELEVENLABS_API_KEY=your_elevenlabs_api_key_here
    ```
@@ -40,12 +43,14 @@ A beautiful single-page web application that converts text to speech using Resem
    - Go to your project settings
    - Navigate to "Environment Variables"
    - Add `RESEMBLE_API_KEY` and `RESEMBLE_VOICE_UUID` for Danny 2.0
+   - Add `FINEVOICE_API_KEY` for Danny 2.1 (optional: `FINEVOICE_VOICE_MODEL`, default: `danny21-321536`)
    - Add `ELEVENLABS_API_KEY` for Danny 1.0 fallback
 4. Deploy!
 
 ## Version Toggle
 
-- **Danny 2.0 (Resemble)** - Default. Uses Resemble AI with Chatterbox-Turbo model and SSML emotion tags.
+- **Danny 2.0 (Resemble)** - Default. Uses Resemble AI with SSML emotion tags.
+- **Danny 2.1 (FineVoice)** - Uses FineVoice.ai with emotion tags ([happy], [breathe], [clear_throat]).
 - **Danny 1.0 (ElevenLabs)** - Toggle to use ElevenLabs with v3 emotion tags.
 
 Your version preference is saved in `localStorage` and persists across sessions.
@@ -54,6 +59,7 @@ Your version preference is saved in `localStorage` and persists across sessions.
 
 - **ElevenLabs (1.0)**: Voice ID `wFzdaipEHKrAyjK9EKuv`
 - **Resemble (2.0)**: Set `RESEMBLE_VOICE_UUID` to your custom voice UUID from the [Resemble dashboard](https://app.resemble.ai)
+- **FineVoice (2.1)**: Set `FINEVOICE_VOICE_MODEL` (optional, default: `danny21-321536`) from [FineVoice](https://finevoice.ai/usercenter)
 
 ## Getting API Keys
 
@@ -61,6 +67,11 @@ Your version preference is saved in `localStorage` and persists across sessions.
 1. Sign up or log in at [Resemble AI](https://resemble.ai)
 2. Create or select a voice and copy its UUID
 3. Get your API token from [Account Settings](https://app.resemble.ai/account/api)
+
+### FineVoice (Danny 2.1)
+1. Sign up or log in at [FineVoice](https://finevoice.ai)
+2. Go to [User Center](https://finevoice.ai/usercenter) > API Tokens
+3. Generate Secret Key
 
 ### ElevenLabs (Danny 1.0)
 1. Sign up or log in at [ElevenLabs](https://elevenlabs.io)
@@ -71,7 +82,7 @@ Your version preference is saved in `localStorage` and persists across sessions.
 
 - Type your text in the textarea
 - Use the emoji picker to add emotion tags (excited, calm, laughs, etc.)
-- Select your version (2.0 Resemble or 1.0 ElevenLabs)
+- Select your version (2.0 Resemble, 2.1 FineVoice, or 1.0 ElevenLabs)
 - Press "Send" or press Enter (Shift+Enter for new line)
 - The audio will be generated and played automatically
 - Use "Clear" to reset the text input
@@ -109,7 +120,7 @@ The script will generate 10 audio files:
 .
 ├── api/
 │   ├── log.js          # Logging endpoint
-│   └── tts.js          # Serverless function for Resemble & ElevenLabs API
+│   └── tts.js          # Serverless function for Resemble, FineVoice & ElevenLabs API
 ├── public/
 │   ├── index.html      # Main application UI
 │   ├── manifest.json   # PWA manifest
@@ -123,11 +134,14 @@ The script will generate 10 audio files:
 
 - `RESEMBLE_API_KEY` - Resemble API token (required for Danny 2.0)
 - `RESEMBLE_VOICE_UUID` - Resemble voice UUID (required for Danny 2.0)
+- `FINEVOICE_API_KEY` - FineVoice API key (required for Danny 2.1)
+- `FINEVOICE_VOICE_MODEL` - FineVoice voice model (optional, default: `danny21-321536`)
 - `ELEVENLABS_API_KEY` - ElevenLabs API key (required for Danny 1.0)
 
 ## Notes
 
 - API keys are stored securely in Vercel environment variables
-- Audio files are generated on-demand from Resemble or ElevenLabs servers
+- Audio files are generated on-demand from Resemble, FineVoice, or ElevenLabs servers
+- FineVoice 2.1 uses an async workflow (may add 1-5 seconds latency)
 - Maximum text length: 5000 characters
 - The serverless function handles all API communication securely

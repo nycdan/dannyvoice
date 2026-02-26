@@ -11,14 +11,17 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'Text is required' });
   }
 
-  if (version !== '1.0' && version !== '2.0') {
-    return res.status(400).json({ error: 'Version must be "1.0" or "2.0"' });
+  if (version !== '1.0' && version !== '2.0' && version !== '2.1') {
+    return res.status(400).json({ error: 'Version must be "1.0", "2.0", or "2.1"' });
   }
 
   const trimmedText = text.trim();
 
   if (version === '1.0') {
     return handleElevenLabs(req, res, trimmedText);
+  }
+  if (version === '2.1') {
+    return handleFineVoice(req, res, trimmedText);
   }
 
   return handleResemble(req, res, trimmedText);
@@ -137,6 +140,96 @@ async function handleResemble(req, res, text) {
     return res.send(audioBuffer);
   } catch (error) {
     console.error('Error calling Resemble API:', error);
+    return res.status(500).json({ error: 'Failed to generate speech: ' + error.message });
+  }
+}
+
+async function handleFineVoice(req, res, text) {
+  const apiKey = process.env.FINEVOICE_API_KEY;
+  const voiceModel = process.env.FINEVOICE_VOICE_MODEL || 'danny21-321536';
+
+  if (!apiKey) {
+    return res.status(500).json({ error: 'FineVoice API key not configured' });
+  }
+
+  const hasHebrew = /[\u0590-\u05FF]/.test(text);
+  const languageCode = hasHebrew ? 'he-IL' : 'en-US';
+
+  try {
+    const ttsUrl = 'https://converter.fineshare.net/api/fsmstexttospeech';
+    const ttsResponse = await fetch(ttsUrl, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        Engine: 'v7',
+        AppId: '107',
+        FeatureId: '22',
+        speech: text,
+        voice: voiceModel,
+        platform: 'web',
+        Parameter: {
+          Speed: 1.0,
+          LanguageCode: languageCode,
+          Pitch: 0.0
+        }
+      })
+    });
+
+    if (!ttsResponse.ok) {
+      const errorData = await ttsResponse.json().catch(() => ({}));
+      const message = errorData.message || errorData.error?.message || `FineVoice API error: ${ttsResponse.statusText}`;
+      return res.status(ttsResponse.status).json({ error: message });
+    }
+
+    const ttsJson = await ttsResponse.json();
+    const uuid = ttsJson.uuid;
+
+    if (!uuid) {
+      return res.status(500).json({ error: 'FineVoice API did not return a task uuid' });
+    }
+
+    const pollUrl = `https://voiceai.fineshare.net/api/checkfilechangestatus/${uuid}`;
+    const maxAttempts = 60;
+    const pollIntervalMs = 500;
+    let pollResult = null;
+
+    for (let attempt = 0; attempt < maxAttempts; attempt++) {
+      const pollResponse = await fetch(pollUrl);
+
+      if (!pollResponse.ok) {
+        await new Promise(r => setTimeout(r, pollIntervalMs));
+        continue;
+      }
+
+      const pollJson = await pollResponse.json();
+      if (pollJson.status === 3 && pollJson.url) {
+        pollResult = pollJson;
+        break;
+      }
+
+      await new Promise(r => setTimeout(r, pollIntervalMs));
+    }
+
+    if (!pollResult || !pollResult.url) {
+      return res.status(504).json({ error: 'FineVoice audio generation timed out' });
+    }
+
+    const audioResponse = await fetch(pollResult.url);
+    if (!audioResponse.ok) {
+      return res.status(500).json({ error: 'Failed to fetch generated audio' });
+    }
+
+    const audioBuffer = await audioResponse.arrayBuffer();
+
+    res.setHeader('Content-Type', 'audio/mpeg');
+    res.setHeader('Content-Length', audioBuffer.byteLength);
+
+    return res.send(Buffer.from(audioBuffer));
+  } catch (error) {
+    console.error('Error calling FineVoice API:', error);
     return res.status(500).json({ error: 'Failed to generate speech: ' + error.message });
   }
 }

@@ -1,7 +1,7 @@
 {
   "name": "Danny Voice",
   "short_name": "Danny Voice",
-  "description": "Text to speech with emotion tags using Resemble or ElevenLabs",
+  "description": "Text to speech with emotion tags using Resemble, FineVoice or ElevenLabs",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

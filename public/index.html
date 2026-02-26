@@ -638,6 +638,7 @@
 
         <div class="version-toggle">
             <button class="version-pill active" id="versionResemble" data-version="2.0">2.0 Resemble</button>
+            <button class="version-pill" id="versionFineVoice" data-version="2.1">2.1 FineVoice</button>
             <button class="version-pill" id="versionElevenLabs" data-version="1.0">1.0 ElevenLabs</button>
         </div>
 
@@ -836,11 +837,12 @@
         const SHARE_BTN = document.getElementById('shareBtn');
         const APP_TITLE = document.getElementById('appTitle');
         const VERSION_RESEMBLE = document.getElementById('versionResemble');
+        const VERSION_FINEVOICE = document.getElementById('versionFineVoice');
         const VERSION_ELEVENLABS = document.getElementById('versionElevenLabs');
 
         // Version state (default 2.0 Resemble, persisted in localStorage)
         let selectedVersion = localStorage.getItem('dannyVoiceVersion') || '2.0';
-        if (selectedVersion !== '1.0' && selectedVersion !== '2.0') selectedVersion = '2.0';
+        if (selectedVersion !== '1.0' && selectedVersion !== '2.0' && selectedVersion !== '2.1') selectedVersion = '2.0';
 
         // Store current audio blob for download/share
         let currentAudioBlob = null;
@@ -848,8 +850,10 @@
         // Initialize version toggle UI
         function updateVersionUI() {
             VERSION_RESEMBLE.classList.toggle('active', selectedVersion === '2.0');
+            VERSION_FINEVOICE.classList.toggle('active', selectedVersion === '2.1');
             VERSION_ELEVENLABS.classList.toggle('active', selectedVersion === '1.0');
-            APP_TITLE.textContent = selectedVersion === '2.0' ? 'Danny Voice 2.0' : 'Danny Voice 1.0';
+            const titles = { '1.0': 'Danny Voice 1.0', '2.0': 'Danny Voice 2.0', '2.1': 'Danny Voice 2.1' };
+            APP_TITLE.textContent = titles[selectedVersion] || 'Danny Voice';
         }
         updateVersionUI();
 
@@ -857,6 +861,11 @@
         VERSION_RESEMBLE.addEventListener('click', () => {
             selectedVersion = '2.0';
             localStorage.setItem('dannyVoiceVersion', '2.0');
+            updateVersionUI();
+        });
+        VERSION_FINEVOICE.addEventListener('click', () => {
+            selectedVersion = '2.1';
+            localStorage.setItem('dannyVoiceVersion', '2.1');
             updateVersionUI();
         });
         VERSION_ELEVENLABS.addEventListener('click', () => {
@@ -1288,6 +1297,35 @@
             return parts.length > 0 ? `<speak>${parts.join('')}</speak>` : '<speak></speak>';
         }
 
+        /**
+         * Converts text with ElevenLabs-style emotion tags to FineVoice-supported tags
+         * FineVoice supports: [happy], [breathe], [clear_throat]
+         * @param {string} textWithTags - Text containing [tag] emotion tags (and possibly emojis)
+         * @returns {string} - Text with FineVoice-compatible tags
+         */
+        function convertToFineVoiceTags(textWithTags) {
+            const emojiRegex = /[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]|[\u{1F600}-\u{1F64F}]|[\u{1F680}-\u{1F6FF}]/gu;
+            let text = textWithTags.replace(emojiRegex, '').trim();
+
+            const tagToFineVoice = {
+                'excited': '[happy]',
+                'cheerfully': '[happy]',
+                'playfully': '[happy]',
+                'laughs': '[happy]',
+                'sigh': '[breathe]',
+                'gasps': '[breathe]',
+                'gulps': '[breathe]',
+                'pauses': '[breathe]',
+                'hesitates': '[breathe]',
+                'stammers': '[clear_throat]'
+            };
+
+            return text.replace(/\[([^\]]+)\]\s*/g, (match, tag) => {
+                const fv = tagToFineVoice[tag.toLowerCase()];
+                return fv ? fv + ' ' : match;
+            });
+        }
+
         function showStatus(message, type) {
             STATUS.textContent = message;
             STATUS.className = `status active ${type}`;
@@ -1312,9 +1350,14 @@
             const textWithTags = convertEmojisToTags(text);
 
             // Build payload based on selected version
-            const payload = selectedVersion === '2.0'
-                ? { text: convertToResembleSSML(textWithTags), version: '2.0' }
-                : { text: textWithTags, version: '1.0' };
+            let payload;
+            if (selectedVersion === '2.0') {
+                payload = { text: convertToResembleSSML(textWithTags), version: '2.0' };
+            } else if (selectedVersion === '2.1') {
+                payload = { text: convertToFineVoiceTags(textWithTags), version: '2.1' };
+            } else {
+                payload = { text: textWithTags, version: '1.0' };
+            }
 
             // Disable button and show loading
             SEND_BTN.disabled = true;
