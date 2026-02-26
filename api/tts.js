@@ -173,7 +173,9 @@ async function handleFineVoice(req, res, text) {
         Parameter: {
           Speed: 1.0,
           LanguageCode: languageCode,
-          Pitch: 0.0
+          Pitch: 0.0,
+          Temperature: 0.9,
+          TopP: 0.9
         }
       })
     });
