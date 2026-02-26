@@ -15,12 +15,12 @@ const phrases = [
     { phrase: "I'm cold", filename: 'im-cold.mp3' }
 ];
 
-const voiceId = 'wFzdaipEHKrAyjK9EKuv';
-const apiKey = process.env.ELEVENLABS_API_KEY;
+const apiKey = process.env.FINEVOICE_API_KEY;
+const voiceModel = process.env.FINEVOICE_VOICE_MODEL || 'danny21-321536';
 
 if (!apiKey) {
-    console.error('Error: ELEVENLABS_API_KEY environment variable is not set');
-    console.error('Please set it with: export ELEVENLABS_API_KEY=your_key_here');
+    console.error('Error: FINEVOICE_API_KEY environment variable is not set');
+    console.error('Please set it with: export FINEVOICE_API_KEY=your_key_here');
     process.exit(1);
 }
 
@@ -34,61 +34,93 @@ if (!fs.existsSync(publicDir)) {
 async function generateAudio(phrase, filename) {
     try {
         console.log(`Generating audio for: "${phrase}" -> ${filename}`);
-        
-        // First, get voice settings
-        const voiceUrl = `https://api.elevenlabs.io/v1/voices/${voiceId}`;
-        const voiceResponse = await fetch(voiceUrl, {
-            headers: {
-                'xi-api-key': apiKey
-            }
-        });
-        
-        let voiceSettings = {
-            stability: 0.5,
-            similarity_boost: 0.75
-        };
-        
-        if (voiceResponse.ok) {
-            const voiceData = await voiceResponse.json();
-            if (voiceData.settings) {
-                voiceSettings = voiceData.settings;
-            }
-        }
-        
-        // Generate audio
-        const requestBody = {
-            text: phrase.trim(),
-            model_id: 'eleven_v3',
-            voice_settings: voiceSettings
-        };
-        
-        const url = `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`;
-        const response = await fetch(url, {
+
+        const ttsUrl = 'https://converter.fineshare.net/api/fsmstexttospeech';
+        const ttsResponse = await fetch(ttsUrl, {
             method: 'POST',
             headers: {
-                'Accept': 'audio/mpeg',
-                'Content-Type': 'application/json',
-                'xi-api-key': apiKey
+                'Authorization': `Bearer ${apiKey}`,
+                'Content-Type': 'application/json'
             },
-            body: JSON.stringify(requestBody)
+            body: JSON.stringify({
+                engine: 'gpt-api',
+                appId: '107',
+                featureId: '22',
+                speech: phrase.trim(),
+                voice: voiceModel,
+                ChangerType: 3,
+                designUuid: null,
+                platform: `web-app-tts-${voiceModel}`,
+                Parameter: {
+                    speed: 1,
+                    languageCode: 'en-US',
+                    outputSpeed: 1,
+                    outputGender: 1,
+                    name: voiceModel,
+                    ssml: false,
+                    effect: null,
+                    amotion: 'normal',
+                    pitch: 0,
+                    temperature: 0.9,
+                    top_p: 0.9
+                }
+            })
         });
 
-        if (!response.ok) {
-            const errorData = await response.json().catch(() => ({}));
-            throw new Error(errorData.detail?.message || `API error: ${response.statusText}`);
+        if (!ttsResponse.ok) {
+            const errorData = await ttsResponse.json().catch(() => ({}));
+            throw new Error(errorData.message || errorData.error?.message || `API error: ${ttsResponse.statusText}`);
         }
 
-        // Get the audio buffer
-        const audioBuffer = await response.arrayBuffer();
+        const ttsJson = await ttsResponse.json();
+        const uuid = ttsJson.uuid;
+
+        if (!uuid) {
+            throw new Error('FineVoice API did not return a task uuid');
+        }
+
+        // Poll for completion
+        const pollUrl = `https://voiceai.fineshare.net/api/checkfilechangestatus/${uuid}`;
+        const maxAttempts = 60;
+        const pollIntervalMs = 500;
+        let pollResult = null;
+
+        for (let attempt = 0; attempt < maxAttempts; attempt++) {
+            const pollResponse = await fetch(pollUrl);
+
+            if (!pollResponse.ok) {
+                await new Promise(r => setTimeout(r, pollIntervalMs));
+                continue;
+            }
+
+            const pollJson = await pollResponse.json();
+            if (pollJson.status === 3 && pollJson.url) {
+                pollResult = pollJson;
+                break;
+            }
+
+            await new Promise(r => setTimeout(r, pollIntervalMs));
+        }
+
+        if (!pollResult || !pollResult.url) {
+            throw new Error('FineVoice audio generation timed out');
+        }
+
+        const audioResponse = await fetch(pollResult.url);
+        if (!audioResponse.ok) {
+            throw new Error('Failed to fetch generated audio');
+        }
+
+        const audioBuffer = await audioResponse.arrayBuffer();
         const buffer = Buffer.from(audioBuffer);
-        
+
         // Save to public directory
         const filePath = path.join(publicDir, filename);
         fs.writeFileSync(filePath, buffer);
-        
+
         console.log(`✓ Saved: ${filename} (${(buffer.length / 1024).toFixed(2)} KB)`);
         return true;
-        
+
     } catch (error) {
         console.error(`✗ Error generating "${phrase}":`, error.message);
         return false;
@@ -96,11 +128,12 @@ async function generateAudio(phrase, filename) {
 }
 
 async function generateAll() {
-    console.log('Starting soundboard audio generation...\n');
-    
+    console.log('Starting soundboard audio generation (FineVoice 2.1)...\n');
+    console.log(`Voice: ${voiceModel}\n`);
+
     let successCount = 0;
     let failCount = 0;
-    
+
     for (const { phrase, filename } of phrases) {
         const success = await generateAudio(phrase, filename);
         if (success) {
@@ -108,11 +141,11 @@ async function generateAll() {
         } else {
             failCount++;
         }
-        
-        // Add a small delay between requests to avoid rate limiting
-        await new Promise(resolve => setTimeout(resolve, 500));
+
+        // Add a delay between requests to avoid rate limiting
+        await new Promise(resolve => setTimeout(resolve, 1000));
     }
-    
+
     console.log(`\n=== Generation Complete ===`);
     console.log(`✓ Success: ${successCount}`);
     console.log(`✗ Failed: ${failCount}`);

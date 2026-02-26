@@ -89,13 +89,16 @@ Your version preference is saved in `localStorage` and persists across sessions.
 
 ## Generating Soundboard Audio Files
 
-The soundboard uses pre-generated MP3 files. To regenerate them:
+The soundboard uses pre-generated MP3 files. To regenerate them with FineVoice (2.1):
 
 1. Make sure you have Node.js 18+ installed (for fetch API support)
-2. Set your ElevenLabs API key as an environment variable:
+2. Set your FineVoice API key:
+
    ```bash
-   export ELEVENLABS_API_KEY=your_api_key_here
+   export FINEVOICE_API_KEY=your_api_key_here
    ```
+   Optionally set `FINEVOICE_VOICE_MODEL` (default: `danny21-321536`)
+
 3. Run the generation script:
    ```bash
    node generate-soundboard.js
