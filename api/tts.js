@@ -166,18 +166,26 @@ async function handleFineVoice(req, res, text) {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        Engine: 'v7',
-        AppId: '107',
-        FeatureId: '22',
+        engine: 'gpt-api',
+        appId: '107',
+        featureId: '22',
         speech: text,
         voice: voiceModel,
-        platform: 'web',
+        ChangerType: 3,
+        designUuid: null,
+        platform: `web-app-tts-${voiceModel}`,
         Parameter: {
-          Speed: 1.0,
-          LanguageCode: languageCode,
-          Pitch: 0.0,
-          Temperature: 0.9,
-          TopP: 0.9
+          speed: 1,
+          languageCode,
+          outputSpeed: 1,
+          outputGender: 1,
+          name: voiceModel,
+          ssml: false,
+          effect: null,
+          amotion: 'normal',
+          pitch: 0,
+          temperature: 0.9,
+          top_p: 0.9
         }
       })
     });
