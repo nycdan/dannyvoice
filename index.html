@@ -58,6 +58,36 @@
             font-size: 0.9rem;
         }
 
+        .version-toggle {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .version-pill {
+            padding: 8px 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 25px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: #f8f9fa;
+            color: #666;
+        }
+
+        .version-pill:hover {
+            border-color: #667eea;
+            color: #667eea;
+        }
+
+        .version-pill.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-color: transparent;
+            color: white;
+        }
+
         .input-section {
             margin-bottom: 20px;
             position: relative;
@@ -466,7 +496,13 @@
 </head>
 <body>
     <div class="container">
-        <h1>Danny Voice 1.0</h1>
+        <h1 id="appTitle">Danny Voice 2.0</h1>
+
+        <div class="version-toggle">
+            <button class="version-pill active" id="versionResemble" data-version="2.0">2.0 Resemble</button>
+            <button class="version-pill" id="versionFineVoice" data-version="2.1">2.1 FineVoice</button>
+            <button class="version-pill" id="versionElevenLabs" data-version="1.0">1.0 ElevenLabs</button>
+        </div>
 
         <div class="install-prompt" id="installPrompt">
             <div class="install-prompt-content">
@@ -635,9 +671,43 @@
         const EMOJI_PICKER = document.getElementById('emojiPicker');
         const DOWNLOAD_BTN = document.getElementById('downloadBtn');
         const SHARE_BTN = document.getElementById('shareBtn');
-        
+        const APP_TITLE = document.getElementById('appTitle');
+        const VERSION_RESEMBLE = document.getElementById('versionResemble');
+        const VERSION_FINEVOICE = document.getElementById('versionFineVoice');
+        const VERSION_ELEVENLABS = document.getElementById('versionElevenLabs');
+
+        // Version state (default 2.0 Resemble, persisted in localStorage)
+        let selectedVersion = localStorage.getItem('dannyVoiceVersion') || '2.0';
+        if (selectedVersion !== '1.0' && selectedVersion !== '2.0' && selectedVersion !== '2.1') selectedVersion = '2.0';
+
         // Store current audio blob for download/share
         let currentAudioBlob = null;
+
+        // Initialize version toggle UI
+        function updateVersionUI() {
+            VERSION_RESEMBLE.classList.toggle('active', selectedVersion === '2.0');
+            VERSION_FINEVOICE.classList.toggle('active', selectedVersion === '2.1');
+            VERSION_ELEVENLABS.classList.toggle('active', selectedVersion === '1.0');
+            const titles = { '1.0': 'Danny Voice 1.0', '2.0': 'Danny Voice 2.0', '2.1': 'Danny Voice 2.1' };
+            APP_TITLE.textContent = titles[selectedVersion] || 'Danny Voice';
+        }
+        updateVersionUI();
+
+        VERSION_RESEMBLE.addEventListener('click', () => {
+            selectedVersion = '2.0';
+            localStorage.setItem('dannyVoiceVersion', '2.0');
+            updateVersionUI();
+        });
+        VERSION_FINEVOICE.addEventListener('click', () => {
+            selectedVersion = '2.1';
+            localStorage.setItem('dannyVoiceVersion', '2.1');
+            updateVersionUI();
+        });
+        VERSION_ELEVENLABS.addEventListener('click', () => {
+            selectedVersion = '1.0';
+            localStorage.setItem('dannyVoiceVersion', '1.0');
+            updateVersionUI();
+        });
 
         // Emoji to ElevenLabs v3 emotion tag mapping
         const emojiToTagMap = {
@@ -818,6 +888,87 @@
             return result;
         }
 
+        function convertToResembleSSML(textWithTags) {
+            const emojiRegex = /[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]|[\u{1F600}-\u{1F64F}]|[\u{1F680}-\u{1F6FF}]/gu;
+            const textOnly = textWithTags.replace(emojiRegex, '').trim();
+            if (!textOnly) return '<speak></speak>';
+            const tagRegex = /\[([^\]]+)\]\s*/g;
+            const segments = [];
+            let lastIndex = 0;
+            let match;
+            while ((match = tagRegex.exec(textOnly)) !== null) {
+                const before = textOnly.slice(lastIndex, match.index);
+                if (before) segments.push({ text: before, tag: null });
+                segments.push({ text: '', tag: match[1].toLowerCase() });
+                lastIndex = tagRegex.lastIndex;
+            }
+            const after = textOnly.slice(lastIndex);
+            if (after) segments.push({ text: after, tag: null });
+            const breakOnlyTags = new Set(['gasps', 'sigh', 'gulps', 'pauses', 'hesitates', 'stammers', 'laughs']);
+            const merged = [];
+            for (let i = 0; i < segments.length; i++) {
+                const seg = segments[i];
+                if (seg.tag === null) merged.push(seg);
+                else if (breakOnlyTags.has(seg.tag)) merged.push({ text: '', tag: seg.tag });
+                else {
+                    let text = seg.text;
+                    if (i + 1 < segments.length && segments[i + 1].tag === null) {
+                        text = segments[i + 1].text;
+                        i++;
+                    }
+                    merged.push({ text, tag: seg.tag });
+                }
+            }
+            function escapeXml(str) {
+                return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&apos;');
+            }
+            function wrapHebrewInLang(str) {
+                if (!str) return str;
+                return str.replace(/[\u0590-\u05FF]+/g, (m) => `<lang xml:lang="he-il">${m}</lang>`);
+            }
+            const tagToSSML = {
+                'excited': (t) => `<prosody rate="120%" pitch="+1st">${t}</prosody>`,
+                'sorrowful': (t) => `<prosody rate="85%" pitch="-1st" volume="soft">${t}</prosody>`,
+                'nervous': (t) => `<prosody rate="130%">${t}</prosody>`,
+                'frustrated': (t) => `<emphasis level="strong">${t}</emphasis>`,
+                'calm': (t) => `<prosody rate="90%" volume="soft">${t}</prosody>`,
+                'gasps': () => '<break time="500ms"/>',
+                'laughs': () => '[laugh]',
+                'sigh': () => '<break time="800ms"/>',
+                'gulps': () => '<break time="300ms"/>',
+                'whispers': (t) => `<prosody volume="x-soft" rate="90%">${t}</prosody>`,
+                'pauses': () => '<break time="1s"/>',
+                'hesitates': () => '<break time="500ms"/>',
+                'stammers': () => '<break time="300ms"/>',
+                'resigned tone': (t) => `<prosody rate="85%" pitch="-1st">${t}</prosody>`,
+                'cheerfully': (t) => `<prosody rate="110%" pitch="+0.5st">${t}</prosody>`,
+                'flatly': (t) => `<emphasis level="reduced">${t}</emphasis>`,
+                'playfully': (t) => t ? `<prosody rate="110%">${t}</prosody>` : '[chuckle]'
+            };
+            const parts = merged.map(({ text, tag }) => {
+                let escaped = escapeXml(text);
+                escaped = wrapHebrewInLang(escaped);
+                if (tag === null) return escaped;
+                const fn = tagToSSML[tag];
+                return fn ? fn(escaped) : escaped;
+            });
+            return parts.length > 0 ? `<speak>${parts.join('')}</speak>` : '<speak></speak>';
+        }
+
+        function convertToFineVoiceTags(textWithTags) {
+            const emojiRegex = /[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]|[\u{1F600}-\u{1F64F}]|[\u{1F680}-\u{1F6FF}]/gu;
+            let text = textWithTags.replace(emojiRegex, '').trim();
+            const tagToFineVoice = {
+                'excited': '[happy]', 'cheerfully': '[happy]', 'playfully': '[happy]', 'laughs': '[happy]',
+                'sigh': '[breathe]', 'gasps': '[breathe]', 'gulps': '[breathe]', 'pauses': '[breathe]', 'hesitates': '[breathe]',
+                'stammers': '[clear_throat]'
+            };
+            return text.replace(/\[([^\]]+)\]\s*/g, (match, tag) => {
+                const fv = tagToFineVoice[tag.toLowerCase()];
+                return fv ? fv + ' ' : match;
+            });
+        }
+
         function showStatus(message, type) {
             STATUS.textContent = message;
             STATUS.className = `status active ${type}`;
@@ -841,6 +992,16 @@
             // Convert emojis to emotion tags
             const textWithTags = convertEmojisToTags(text);
 
+            // Build payload based on selected version
+            let payload;
+            if (selectedVersion === '2.0') {
+                payload = { text: convertToResembleSSML(textWithTags), version: '2.0' };
+            } else if (selectedVersion === '2.1') {
+                payload = { text: convertToFineVoiceTags(textWithTags), version: '2.1' };
+            } else {
+                payload = { text: textWithTags, version: '1.0' };
+            }
+
             // Disable button and show loading
             SEND_BTN.disabled = true;
             showStatus('Generating speech...', 'loading');
@@ -852,7 +1013,7 @@
                     headers: {
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify({ text: textWithTags })
+                    body: JSON.stringify(payload)
                 });
 
                 if (!response.ok) {
