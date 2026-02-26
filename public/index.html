@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Danny Voice 1.0</title>
+    <title>Danny Voice</title>
     
     <!-- PWA Meta Tags -->
     <meta name="theme-color" content="#667eea">
-    <meta name="description" content="Text to speech with emotion tags using ElevenLabs">
+    <meta name="description" content="Text to speech with emotion tags using Resemble or ElevenLabs">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -59,6 +59,35 @@
             color: #666;
             margin-bottom: 30px;
             font-size: 0.9rem;
+        }
+
+        .version-toggle {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+
+        .version-pill {
+            padding: 8px 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 25px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: #f8f9fa;
+            color: #666;
+        }
+
+        .version-pill:hover {
+            border-color: #667eea;
+            color: #667eea;
+        }
+
+        .version-pill.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-color: transparent;
+            color: white;
         }
 
         .input-section {
@@ -605,7 +634,12 @@
 </head>
 <body>
     <div class="container">
-        <h1>Danny Voice 1.0</h1>
+        <h1 id="appTitle">Danny Voice 2.0</h1>
+
+        <div class="version-toggle">
+            <button class="version-pill active" id="versionResemble" data-version="2.0">2.0 Resemble</button>
+            <button class="version-pill" id="versionElevenLabs" data-version="1.0">1.0 ElevenLabs</button>
+        </div>
 
         <div class="install-prompt" id="installPrompt">
             <div class="install-prompt-content">
@@ -800,9 +834,36 @@
         const EMOJI_PICKER = document.getElementById('emojiPicker');
         const DOWNLOAD_BTN = document.getElementById('downloadBtn');
         const SHARE_BTN = document.getElementById('shareBtn');
-        
+        const APP_TITLE = document.getElementById('appTitle');
+        const VERSION_RESEMBLE = document.getElementById('versionResemble');
+        const VERSION_ELEVENLABS = document.getElementById('versionElevenLabs');
+
+        // Version state (default 2.0 Resemble, persisted in localStorage)
+        let selectedVersion = localStorage.getItem('dannyVoiceVersion') || '2.0';
+        if (selectedVersion !== '1.0' && selectedVersion !== '2.0') selectedVersion = '2.0';
+
         // Store current audio blob for download/share
         let currentAudioBlob = null;
+
+        // Initialize version toggle UI
+        function updateVersionUI() {
+            VERSION_RESEMBLE.classList.toggle('active', selectedVersion === '2.0');
+            VERSION_ELEVENLABS.classList.toggle('active', selectedVersion === '1.0');
+            APP_TITLE.textContent = selectedVersion === '2.0' ? 'Danny Voice 2.0' : 'Danny Voice 1.0';
+        }
+        updateVersionUI();
+
+        // Version toggle event listeners
+        VERSION_RESEMBLE.addEventListener('click', () => {
+            selectedVersion = '2.0';
+            localStorage.setItem('dannyVoiceVersion', '2.0');
+            updateVersionUI();
+        });
+        VERSION_ELEVENLABS.addEventListener('click', () => {
+            selectedVersion = '1.0';
+            localStorage.setItem('dannyVoiceVersion', '1.0');
+            updateVersionUI();
+        });
 
         // Logging function to send logs to Vercel
         async function logToVercel(level, message, data = null) {
@@ -1133,6 +1194,94 @@
             return result;
         }
 
+        /**
+         * Converts text with ElevenLabs-style emotion tags to Resemble SSML
+         * @param {string} textWithTags - Text containing [tag] emotion tags (and possibly emojis)
+         * @returns {string} - SSML string wrapped in <speak>...</speak>
+         */
+        function convertToResembleSSML(textWithTags) {
+            const emojiRegex = /[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]|[\u{1F600}-\u{1F64F}]|[\u{1F680}-\u{1F6FF}]/gu;
+            const textOnly = textWithTags.replace(emojiRegex, '').trim();
+
+            if (!textOnly) {
+                return '<speak></speak>';
+            }
+
+            const tagRegex = /\[([^\]]+)\]\s*/g;
+            const segments = [];
+            let lastIndex = 0;
+            let match;
+
+            while ((match = tagRegex.exec(textOnly)) !== null) {
+                const before = textOnly.slice(lastIndex, match.index);
+                if (before) segments.push({ text: before, tag: null });
+                segments.push({ text: '', tag: match[1].toLowerCase() });
+                lastIndex = tagRegex.lastIndex;
+            }
+            const after = textOnly.slice(lastIndex);
+            if (after) segments.push({ text: after, tag: null });
+
+            // Break-only tags: output SSML without consuming following text
+            const breakOnlyTags = new Set(['gasps', 'sigh', 'gulps', 'pauses', 'hesitates', 'stammers', 'laughs']);
+
+            // Merge: each tag applies to the following text until next tag (except break-only)
+            const merged = [];
+            for (let i = 0; i < segments.length; i++) {
+                const seg = segments[i];
+                if (seg.tag === null) {
+                    merged.push(seg);
+                } else if (breakOnlyTags.has(seg.tag)) {
+                    merged.push({ text: '', tag: seg.tag });
+                } else {
+                    let text = seg.text;
+                    if (i + 1 < segments.length && segments[i + 1].tag === null) {
+                        text = segments[i + 1].text;
+                        i++;
+                    }
+                    merged.push({ text, tag: seg.tag });
+                }
+            }
+
+            function escapeXml(str) {
+                return str
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;')
+                    .replace(/"/g, '&quot;')
+                    .replace(/'/g, '&apos;');
+            }
+
+            const tagToSSML = {
+                'excited': (t) => `<prosody rate="120%" pitch="+1st">${t}</prosody>`,
+                'sorrowful': (t) => `<prosody rate="85%" pitch="-1st" volume="soft">${t}</prosody>`,
+                'nervous': (t) => `<prosody rate="130%">${t}</prosody>`,
+                'frustrated': (t) => `<emphasis level="strong">${t}</emphasis>`,
+                'calm': (t) => `<prosody rate="90%" volume="soft">${t}</prosody>`,
+                'gasps': () => '<break time="500ms"/>',
+                'laughs': () => '[laugh]',
+                'sigh': () => '<break time="800ms"/>',
+                'gulps': () => '<break time="300ms"/>',
+                'whispers': (t) => `<prosody volume="x-soft" rate="90%">${t}</prosody>`,
+                'pauses': () => '<break time="1s"/>',
+                'hesitates': () => '<break time="500ms"/>',
+                'stammers': () => '<break time="300ms"/>',
+                'resigned tone': (t) => `<prosody rate="85%" pitch="-1st">${t}</prosody>`,
+                'cheerfully': (t) => `<prosody rate="110%" pitch="+0.5st">${t}</prosody>`,
+                'flatly': (t) => `<emphasis level="reduced">${t}</emphasis>`,
+                'playfully': (t) => t ? `<prosody rate="110%">${t}</prosody>` : '[chuckle]'
+            };
+
+            const parts = merged.map(({ text, tag }) => {
+                const escaped = escapeXml(text);
+                if (tag === null) return escaped;
+                const fn = tagToSSML[tag];
+                if (!fn) return escaped;
+                return fn(escaped);
+            });
+
+            return parts.length > 0 ? `<speak>${parts.join('')}</speak>` : '<speak></speak>';
+        }
+
         function showStatus(message, type) {
             STATUS.textContent = message;
             STATUS.className = `status active ${type}`;
@@ -1156,6 +1305,11 @@
             // Convert emojis to emotion tags
             const textWithTags = convertEmojisToTags(text);
 
+            // Build payload based on selected version
+            const payload = selectedVersion === '2.0'
+                ? { text: convertToResembleSSML(textWithTags), version: '2.0' }
+                : { text: textWithTags, version: '1.0' };
+
             // Disable button and show loading
             SEND_BTN.disabled = true;
             showStatus('Generating speech...', 'loading');
@@ -1167,7 +1321,7 @@
                     headers: {
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify({ text: textWithTags })
+                    body: JSON.stringify(payload)
                 });
 
                 if (!response.ok) {

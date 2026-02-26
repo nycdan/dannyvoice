@@ -1,7 +1,7 @@
 {
-  "name": "Danny Voice 1.0",
+  "name": "Danny Voice",
   "short_name": "Danny Voice",
-  "description": "Text to speech with emotion tags using ElevenLabs",
+  "description": "Text to speech with emotion tags using Resemble or ElevenLabs",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#667eea",
