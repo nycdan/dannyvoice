@@ -1384,23 +1384,10 @@
                 AUDIO_PLAYER.removeAttribute('src');
                 AUDIO_PLAYER.load();
                 
-                // Set new source and show player
+                // Set new source and show player (no auto-play - manual play avoids double-play bug)
                 AUDIO_PLAYER.src = audioUrl;
                 AUDIO_SECTION.classList.add('active');
-                showStatus('Audio generated successfully!', 'success');
-                
-                // Auto-play once when ready (guard prevents double play from canplay + readyState)
-                let autoPlayed = false;
-                const playWhenReady = () => {
-                    if (autoPlayed) return;
-                    autoPlayed = true;
-                    AUDIO_PLAYER.removeEventListener('canplay', playWhenReady);
-                    AUDIO_PLAYER.play().catch(err => {
-                        console.log('Auto-play prevented:', err);
-                    });
-                };
-                AUDIO_PLAYER.addEventListener('canplay', playWhenReady);
-                if (AUDIO_PLAYER.readyState >= 3) playWhenReady();
+                showStatus('Audio generated successfully! Click play to listen.', 'success');
 
             } catch (error) {
                 console.error('Error:', error);
