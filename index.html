@@ -682,6 +682,7 @@
 
         // Store current audio blob for download/share
         let currentAudioBlob = null;
+        let currentAudioUrl = null;
 
         // Initialize version toggle UI
         function updateVersionUI() {
@@ -958,15 +959,8 @@
         function convertToFineVoiceTags(textWithTags) {
             const emojiRegex = /[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]|[\u{1F600}-\u{1F64F}]|[\u{1F680}-\u{1F6FF}]/gu;
             let text = textWithTags.replace(emojiRegex, '').trim();
-            const tagToFineVoice = {
-                'excited': '[happy]', 'cheerfully': '[happy]', 'playfully': '[happy]', 'laughs': '[happy]',
-                'sigh': '[breathe]', 'gasps': '[breathe]', 'gulps': '[breathe]', 'pauses': '[breathe]', 'hesitates': '[breathe]',
-                'stammers': '[clear_throat]'
-            };
-            return text.replace(/\[([^\]]+)\]\s*/g, (match, tag) => {
-                const fv = tagToFineVoice[tag.toLowerCase()];
-                return fv ? fv + ' ' : match;
-            });
+            // Strip emotion tags for FineVoice - pass plain text for accurate voice match
+            return text.replace(/\[([^\]]+)\]\s*/g, '').trim();
         }
 
         function showStatus(message, type) {
@@ -1025,8 +1019,16 @@
                 const audioBlob = await response.blob();
                 const audioUrl = URL.createObjectURL(audioBlob);
                 
-                // Store blob for download/share
+                // Revoke previous object URL to prevent double playback
+                if (currentAudioUrl) {
+                    URL.revokeObjectURL(currentAudioUrl);
+                }
+                currentAudioUrl = audioUrl;
                 currentAudioBlob = audioBlob;
+                
+                // Stop any previous playback before setting new source
+                AUDIO_PLAYER.pause();
+                AUDIO_PLAYER.currentTime = 0;
                 
                 // Set audio source and show player
                 AUDIO_PLAYER.src = audioUrl;
