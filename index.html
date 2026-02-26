@@ -1037,8 +1037,11 @@
                 AUDIO_SECTION.classList.add('active');
                 showStatus('Audio generated successfully!', 'success');
                 
-                // Play only when new audio is ready (prevents overlap with stale buffer)
+                // Auto-play once when ready (guard prevents double play from canplay + readyState)
+                let autoPlayed = false;
                 const playWhenReady = () => {
+                    if (autoPlayed) return;
+                    autoPlayed = true;
                     AUDIO_PLAYER.removeEventListener('canplay', playWhenReady);
                     AUDIO_PLAYER.play().catch(err => {
                         console.log('Auto-play prevented:', err);
