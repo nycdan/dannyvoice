@@ -88,6 +88,10 @@
             color: white;
         }
 
+        .version-pill.hidden {
+            display: none;
+        }
+
         .input-section {
             margin-bottom: 20px;
             position: relative;
@@ -496,11 +500,11 @@
 </head>
 <body>
     <div class="container">
-        <h1 id="appTitle">Danny Voice 2.0</h1>
+        <h1 id="appTitle">Danny Voice 2.1</h1>
 
         <div class="version-toggle">
-            <button class="version-pill active" id="versionResemble" data-version="2.0">2.0 Resemble</button>
-            <button class="version-pill" id="versionFineVoice" data-version="2.1">2.1 FineVoice</button>
+            <button class="version-pill hidden" id="versionResemble" data-version="2.0">2.0 Resemble</button>
+            <button class="version-pill active" id="versionFineVoice" data-version="2.1">2.1 FineVoice</button>
             <button class="version-pill" id="versionElevenLabs" data-version="1.0">1.0 ElevenLabs</button>
         </div>
 
@@ -676,9 +680,9 @@
         const VERSION_FINEVOICE = document.getElementById('versionFineVoice');
         const VERSION_ELEVENLABS = document.getElementById('versionElevenLabs');
 
-        // Version state (default 2.0 Resemble, persisted in localStorage)
-        let selectedVersion = localStorage.getItem('dannyVoiceVersion') || '2.0';
-        if (selectedVersion !== '1.0' && selectedVersion !== '2.0' && selectedVersion !== '2.1') selectedVersion = '2.0';
+        // Version state (default 2.1 FineVoice, persisted in localStorage)
+        let selectedVersion = localStorage.getItem('dannyVoiceVersion') || '2.1';
+        if (selectedVersion !== '1.0' && selectedVersion !== '2.0' && selectedVersion !== '2.1') selectedVersion = '2.1';
 
         // Store current audio blob for download/share
         let currentAudioBlob = null;
