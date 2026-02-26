@@ -155,6 +155,8 @@ async function handleFineVoice(req, res, text) {
   const hasHebrew = /[\u0590-\u05FF]/.test(text);
   const languageCode = hasHebrew ? 'he-IL' : 'en-US';
 
+  console.log('[FineVoice TTS] voice:', voiceModel, '| language:', languageCode, '| text length:', text.length);
+
   try {
     const ttsUrl = 'https://converter.fineshare.net/api/fsmstexttospeech';
     const ttsResponse = await fetch(ttsUrl, {
