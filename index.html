@@ -1036,9 +1036,11 @@
                 AUDIO_SECTION.classList.add('active');
                 showStatus('Audio generated successfully!', 'success');
 
-                // Auto-play via detached Audio (no DOM audio element = no double-play)
+                // Auto-play via detached Audio - wait for canplay to avoid load/play race
                 const oneShot = new Audio(audioUrl);
-                oneShot.play().catch(err => console.log('Auto-play prevented:', err));
+                oneShot.addEventListener('canplay', () => {
+                    oneShot.play().catch(err => console.log('Auto-play prevented:', err));
+                }, { once: true });
 
             } catch (error) {
                 console.error('Error:', error);
