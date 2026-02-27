@@ -1407,8 +1407,12 @@
         SEND_BTN.addEventListener('click', convertTextToSpeech);
         CLEAR_BTN.addEventListener('click', clearText);
 
-        // Replay button - creates fresh Audio each time
+        // Replay button - creates fresh Audio each time (guard prevents double-fire)
+        let lastReplayAt = 0;
         REPLAY_BTN.addEventListener('click', () => {
+            const now = Date.now();
+            if (now - lastReplayAt < 300) return;
+            lastReplayAt = now;
             if (currentAudioUrl) {
                 const audio = new Audio(currentAudioUrl);
                 audio.play().catch(() => {});
