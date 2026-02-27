@@ -61,10 +61,42 @@
             font-size: 0.9rem;
         }
 
+        .help-quick-btn {
+            width: 100%;
+            padding: 16px 24px;
+            margin-bottom: 16px;
+            font-size: 1.2rem;
+            font-weight: 600;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .help-quick-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .help-quick-btn:active {
+            transform: translateY(0);
+        }
+
+        .app-footer-title {
+            margin-top: 24px;
+            padding-top: 20px;
+            text-align: center;
+            color: #999;
+            font-size: 1rem;
+            font-weight: 500;
+            border-top: 1px solid #eee;
+        }
+
         .version-toggle {
-            display: flex;
-            gap: 8px;
-            margin-bottom: 20px;
+            display: none;
         }
 
         .version-pill {
@@ -682,13 +714,7 @@
 </head>
 <body>
     <div class="container">
-        <h1 id="appTitle">Danny Voice 2.1</h1>
-
-        <div class="version-toggle">
-            <button class="version-pill hidden" id="versionResemble" data-version="2.0">2.0 Resemble</button>
-            <button class="version-pill active" id="versionFineVoice" data-version="2.1">2.1 FineVoice</button>
-            <button class="version-pill" id="versionElevenLabs" data-version="1.0">1.0 ElevenLabs</button>
-        </div>
+        <button class="help-quick-btn" id="helpQuickBtn">I need help</button>
 
         <div class="install-prompt" id="installPrompt">
             <div class="install-prompt-content">
@@ -864,6 +890,8 @@
                 </button>
             </div>
         </div>
+
+        <h1 class="app-footer-title">Danny Voice</h1>
     </div>
 
     <script>
@@ -877,45 +905,12 @@
         const EMOJI_PICKER = document.getElementById('emojiPicker');
         const DOWNLOAD_BTN = document.getElementById('downloadBtn');
         const SHARE_BTN = document.getElementById('shareBtn');
-        const APP_TITLE = document.getElementById('appTitle');
-        const VERSION_RESEMBLE = document.getElementById('versionResemble');
-        const VERSION_FINEVOICE = document.getElementById('versionFineVoice');
-        const VERSION_ELEVENLABS = document.getElementById('versionElevenLabs');
-
-        // Version state (default 2.1 FineVoice, persisted in localStorage)
-        let selectedVersion = localStorage.getItem('dannyVoiceVersion') || '2.1';
-        if (selectedVersion !== '1.0' && selectedVersion !== '2.0' && selectedVersion !== '2.1') selectedVersion = '2.1';
+        // TTS version (FineVoice 2.1 only)
+        let selectedVersion = '2.1';
 
         // Store current audio blob for download/share
         let currentAudioBlob = null;
         let currentAudioUrl = null;
-
-        // Initialize version toggle UI
-        function updateVersionUI() {
-            VERSION_RESEMBLE.classList.toggle('active', selectedVersion === '2.0');
-            VERSION_FINEVOICE.classList.toggle('active', selectedVersion === '2.1');
-            VERSION_ELEVENLABS.classList.toggle('active', selectedVersion === '1.0');
-            const titles = { '1.0': 'Danny Voice 1.0', '2.0': 'Danny Voice 2.0', '2.1': 'Danny Voice 2.1' };
-            APP_TITLE.textContent = titles[selectedVersion] || 'Danny Voice';
-        }
-        updateVersionUI();
-
-        // Version toggle event listeners
-        VERSION_RESEMBLE.addEventListener('click', () => {
-            selectedVersion = '2.0';
-            localStorage.setItem('dannyVoiceVersion', '2.0');
-            updateVersionUI();
-        });
-        VERSION_FINEVOICE.addEventListener('click', () => {
-            selectedVersion = '2.1';
-            localStorage.setItem('dannyVoiceVersion', '2.1');
-            updateVersionUI();
-        });
-        VERSION_ELEVENLABS.addEventListener('click', () => {
-            selectedVersion = '1.0';
-            localStorage.setItem('dannyVoiceVersion', '1.0');
-            updateVersionUI();
-        });
 
         // Logging function to send logs to Vercel
         async function logToVercel(level, message, data = null) {
@@ -1423,6 +1418,11 @@
         SOUNDBOARD_CONTENT.style.display = 'grid';
         SOUNDBOARD_TOGGLE.classList.remove('collapsed');
         renderSoundboard();
+
+        // I need help quick button (top of page)
+        document.getElementById('helpQuickBtn').addEventListener('click', () => {
+            playSoundboardAudio('i-need-help');
+        });
 
         // Emotion map toggle functionality
         const EMOTION_MAP_HEADER = document.getElementById('emotionMapHeader');
