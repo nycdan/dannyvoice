@@ -1036,8 +1036,7 @@
                 AUDIO_SECTION.classList.add('active');
                 showStatus('Audio generated successfully!', 'success');
 
-                // Trigger Replay button (same code path as user click = 1x)
-                REPLAY_BTN.click();
+                playCurrentAudio();
 
             } catch (error) {
                 console.error('Error:', error);
@@ -1067,17 +1066,21 @@
             }
         });
 
-        // Replay button - creates fresh Audio each time (guard prevents double-fire)
-        let lastReplayAt = 0;
-        REPLAY_BTN.addEventListener('click', () => {
-            const now = Date.now();
-            if (now - lastReplayAt < 300) return;
-            lastReplayAt = now;
-            if (currentAudioUrl) {
-                const audio = new Audio(currentAudioUrl);
-                audio.play().catch(() => {});
+        let currentPlayingAudio = null;
+        function playCurrentAudio() {
+            if (!currentAudioUrl) return;
+            if (currentPlayingAudio) {
+                if (currentPlayingAudio.src === currentAudioUrl) return;
+                currentPlayingAudio.pause();
+                currentPlayingAudio.src = '';
+                currentPlayingAudio = null;
             }
-        });
+            const audio = new Audio(currentAudioUrl);
+            currentPlayingAudio = audio;
+            audio.onended = () => { currentPlayingAudio = null; };
+            audio.play().catch(() => { currentPlayingAudio = null; });
+        }
+        REPLAY_BTN.addEventListener('click', playCurrentAudio);
 
         // Download button functionality
         DOWNLOAD_BTN.addEventListener('click', () => {
