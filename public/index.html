@@ -702,16 +702,7 @@
                 <span class="soundboard-toggle" id="soundboardToggle">▼</span>
             </div>
             <div class="soundboard-content" id="soundboardContent">
-                <button class="soundboard-chip" data-phrase="hi-how-are-you">Hi how are you?</button>
-                <button class="soundboard-chip" data-phrase="good-morning">Good morning!</button>
-                <button class="soundboard-chip" data-phrase="please-come-here">Please come here</button>
-                <button class="soundboard-chip" data-phrase="i-need-help">I need help</button>
-                <button class="soundboard-chip" data-phrase="please">Please</button>
-                <button class="soundboard-chip" data-phrase="i-love-you">I love you</button>
-                <button class="soundboard-chip" data-phrase="im-hungry">I'm hungry</button>
-                <button class="soundboard-chip" data-phrase="im-thirsty">I'm thirsty</button>
-                <button class="soundboard-chip" data-phrase="im-tired">I'm tired</button>
-                <button class="soundboard-chip" data-phrase="im-cold">I'm cold</button>
+                <!-- Chips rendered dynamically by renderSoundboard() -->
             </div>
         </div>
 
@@ -1029,7 +1020,35 @@
         let currentPlayingAudio = null;
         let currentPlayingChip = null;
         
-        // Soundboard phrases mapping
+        const PHRASE_STORAGE_KEY = 'dannyvoice_phrase_counts';
+        const MAX_DYNAMIC_PHRASES = 10;
+        
+        function normalizePhrase(text) {
+            return (text || '').trim().toLowerCase();
+        }
+        
+        function recordPhrase(text) {
+            const key = normalizePhrase(text);
+            if (!key) return;
+            const counts = getPhraseCounts();
+            counts[key] = (counts[key] || 0) + 1;
+            try {
+                localStorage.setItem(PHRASE_STORAGE_KEY, JSON.stringify(counts));
+            } catch (e) {
+                console.warn('localStorage full, could not save phrase count', e);
+            }
+        }
+        
+        function getPhraseCounts() {
+            try {
+                const raw = localStorage.getItem(PHRASE_STORAGE_KEY);
+                return raw ? JSON.parse(raw) : {};
+            } catch (e) {
+                return {};
+            }
+        }
+        
+        // Soundboard phrases mapping (fixed chips - pre-recorded MP3s)
         const soundboardPhrases = {
             'hi-how-are-you': 'hi-how-are-you.mp3',
             'good-morning': 'good-morning.mp3',
@@ -1041,6 +1060,19 @@
             'im-thirsty': 'im-thirsty.mp3',
             'im-tired': 'im-tired.mp3',
             'im-cold': 'im-cold.mp3'
+        };
+        
+        const fixedChipLabels = {
+            'hi-how-are-you': "Hi how are you?",
+            'good-morning': "Good morning!",
+            'please-come-here': "Please come here",
+            'i-need-help': "I need help",
+            'please': "Please",
+            'i-love-you': "I love you",
+            'im-hungry': "I'm hungry",
+            'im-thirsty': "I'm thirsty",
+            'im-tired': "I'm tired",
+            'im-cold': "I'm cold"
         };
         
         // Play soundboard audio
@@ -1114,13 +1146,59 @@
             });
         }
         
-        // Add event listeners to soundboard chips
-        const soundboardChips = document.querySelectorAll('.soundboard-chip');
-        soundboardChips.forEach(chip => {
-            chip.addEventListener('click', () => {
-                const phrase = chip.dataset.phrase;
+        function truncateLabel(text, maxLen) {
+            if (!text || text.length <= maxLen) return text;
+            return text.slice(0, maxLen - 1) + '\u2026';
+        }
+        
+        function renderSoundboard() {
+            SOUNDBOARD_CONTENT.innerHTML = '';
+            const counts = getPhraseCounts();
+            const dynamicPhrases = Object.entries(counts)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, MAX_DYNAMIC_PHRASES)
+                .map(([phrase]) => phrase);
+            
+            // Fixed chips (always shown)
+            for (const key of Object.keys(soundboardPhrases)) {
+                const chip = document.createElement('button');
+                chip.className = 'soundboard-chip';
+                chip.dataset.type = 'fixed';
+                chip.dataset.phrase = key;
+                chip.textContent = fixedChipLabels[key] || key;
+                chip.title = fixedChipLabels[key] || key;
+                SOUNDBOARD_CONTENT.appendChild(chip);
+            }
+            
+            // Dynamic chips (most-used phrases)
+            for (const phrase of dynamicPhrases) {
+                const chip = document.createElement('button');
+                chip.className = 'soundboard-chip';
+                chip.dataset.type = 'dynamic';
+                chip.dataset.phrase = phrase;
+                chip.textContent = truncateLabel(phrase, 20);
+                chip.title = phrase;
+                SOUNDBOARD_CONTENT.appendChild(chip);
+            }
+        }
+        
+        // Event delegation for soundboard chips
+        SOUNDBOARD_CONTENT.addEventListener('click', (e) => {
+            const chip = e.target.closest('.soundboard-chip');
+            if (!chip) return;
+            const type = chip.dataset.type;
+            const phrase = chip.dataset.phrase;
+            if (type === 'fixed') {
                 playSoundboardAudio(phrase);
-            });
+            } else if (type === 'dynamic') {
+                (async () => {
+                    const result = await speakPhrase(phrase);
+                    if (result.success) {
+                        recordPhrase(phrase);
+                        renderSoundboard();
+                    }
+                })();
+            }
         });
         
         // Soundboard toggle functionality
@@ -1138,6 +1216,7 @@
         // Initialize soundboard as collapsed
         SOUNDBOARD_CONTENT.style.display = 'none';
         SOUNDBOARD_TOGGLE.classList.add('collapsed');
+        renderSoundboard();
 
         // Emotion map toggle functionality
         const EMOTION_MAP_HEADER = document.getElementById('emotionMapHeader');
@@ -1331,21 +1410,26 @@
         }
 
         let _ttsRunning = false;
-        async function convertTextToSpeech() {
-            if (_ttsRunning) { console.warn('[TTS] blocked duplicate call'); return; }
-            _ttsRunning = true;
-            console.log('[TTS] convertTextToSpeech called, build: 20260226c');
-            const text = TEXT_INPUT.value.trim();
-
-            if (!text) {
-                showStatus('Please enter some text to convert', 'error');
-                return;
+        
+        /**
+         * Generate and play TTS for arbitrary text. Used by Send button and dynamic soundboard chips.
+         * @param {string} text - Plain text to speak
+         * @returns {Promise<{success: boolean}>}
+         */
+        async function speakPhrase(text) {
+            if (_ttsRunning) return { success: false };
+            if (!(text && (text = text.trim()))) return { success: false };
+            
+            if (currentPlayingAudio) {
+                currentPlayingAudio.pause();
+                currentPlayingAudio.currentTime = 0;
+                currentPlayingAudio = null;
+                if (currentPlayingChip) currentPlayingChip.classList.remove('playing');
+                currentPlayingChip = null;
             }
-
-            // Convert emojis to emotion tags
+            
+            _ttsRunning = true;
             const textWithTags = convertEmojisToTags(text);
-
-            // Build payload based on selected version
             let payload;
             if (selectedVersion === '2.0') {
                 payload = { text: convertToResembleSSML(textWithTags), version: '2.0' };
@@ -1355,7 +1439,6 @@
                 payload = { text: textWithTags, version: '1.0' };
             }
 
-            // Disable button and show loading
             SEND_BTN.disabled = true;
             showStatus('Generating speech...', 'loading');
             AUDIO_SECTION.classList.remove('active');
@@ -1363,9 +1446,7 @@
             try {
                 const response = await fetch('/api/tts', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
                 });
 
@@ -1374,26 +1455,37 @@
                     throw new Error(errorData.error || `Error: ${response.status} ${response.statusText}`);
                 }
 
-                // Get audio blob
                 const audioBlob = await response.blob();
                 const audioUrl = URL.createObjectURL(audioBlob);
-                
                 if (currentAudioUrl) URL.revokeObjectURL(currentAudioUrl);
                 currentAudioUrl = audioUrl;
                 currentAudioBlob = audioBlob;
 
                 AUDIO_SECTION.classList.add('active');
                 showStatus('Audio generated successfully!', 'success');
-
-                _autoPlayDone = false;   // reset for new generation
+                _autoPlayDone = false;
                 playCurrentAudio(true);
-
+                return { success: true };
             } catch (error) {
                 console.error('Error:', error);
                 showStatus(`Error: ${error.message}`, 'error');
+                return { success: false };
             } finally {
                 SEND_BTN.disabled = false;
                 _ttsRunning = false;
+            }
+        }
+
+        async function convertTextToSpeech() {
+            const text = TEXT_INPUT.value.trim();
+            if (!text) {
+                showStatus('Please enter some text to convert', 'error');
+                return;
+            }
+            const result = await speakPhrase(text);
+            if (result.success) {
+                recordPhrase(text);
+                renderSoundboard();
             }
         }
 
