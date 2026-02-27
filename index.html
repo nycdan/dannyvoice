@@ -689,6 +689,7 @@
         // Store current audio blob for download/share
         let currentAudioBlob = null;
         let currentAudioUrl = null;
+        let autoPlayAudio = null;
 
         // Initialize version toggle UI
         function updateVersionUI() {
@@ -1036,11 +1037,20 @@
                 AUDIO_SECTION.classList.add('active');
                 showStatus('Audio generated successfully!', 'success');
 
-                // 500ms delay breaks execution chain - test if this fixes double-play
-                setTimeout(() => {
-                    const oneShot = new Audio(audioUrl);
-                    oneShot.play().catch(err => console.log('Auto-play prevented:', err));
-                }, 500);
+                // Single persistent Audio - wait for canplay then play once
+                if (!autoPlayAudio) autoPlayAudio = new Audio();
+                autoPlayAudio.pause();
+                autoPlayAudio.currentTime = 0;
+                autoPlayAudio.src = audioUrl;
+                let played = false;
+                const playOnce = () => {
+                    if (played) return;
+                    played = true;
+                    autoPlayAudio.removeEventListener('canplay', playOnce);
+                    autoPlayAudio.play().catch(err => console.log('Auto-play prevented:', err));
+                };
+                autoPlayAudio.addEventListener('canplay', playOnce, { once: true });
+                if (autoPlayAudio.readyState >= 3) playOnce();
 
             } catch (error) {
                 console.error('Error:', error);
