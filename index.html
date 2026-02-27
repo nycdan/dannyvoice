@@ -652,8 +652,10 @@
 
         <div class="audio-section" id="audioSection">
             <h3>Generated Audio:</h3>
-            <audio id="audioPlayer" controls preload="none"></audio>
             <div class="audio-actions">
+                <button class="download-btn" id="replayBtn">
+                    <span>🔊 Replay</span>
+                </button>
                 <button class="download-btn" id="downloadBtn">
                     <span>📥 Download</span>
                 </button>
@@ -670,7 +672,7 @@
         const CLEAR_BTN = document.getElementById('clearBtn');
         const STATUS = document.getElementById('status');
         const AUDIO_SECTION = document.getElementById('audioSection');
-        const AUDIO_PLAYER = document.getElementById('audioPlayer');
+        const REPLAY_BTN = document.getElementById('replayBtn');
         const EMOJI_BUTTON = document.getElementById('emojiButton');
         const EMOJI_PICKER = document.getElementById('emojiPicker');
         const DOWNLOAD_BTN = document.getElementById('downloadBtn');
@@ -983,7 +985,7 @@
         async function convertTextToSpeech() {
             if (_ttsRunning) { console.warn('[TTS] blocked duplicate call'); return; }
             _ttsRunning = true;
-            console.log('[TTS] convertTextToSpeech called, build: 20260226b');
+            console.log('[TTS] convertTextToSpeech called, build: 20260226c');
             const text = TEXT_INPUT.value.trim();
 
             if (!text) {
@@ -1031,15 +1033,11 @@
                 currentAudioUrl = audioUrl;
                 currentAudioBlob = audioBlob;
 
-                // Set src on DOM player for replay/download (preload=none prevents auto-load)
-                AUDIO_PLAYER.preload = 'none';
-                AUDIO_PLAYER.src = audioUrl;
                 AUDIO_SECTION.classList.add('active');
                 showStatus('Audio generated successfully!', 'success');
 
-                // Auto-play via detached Audio object (not in DOM, can't double-fire)
-                const oneShot = new Audio();
-                oneShot.src = audioUrl;
+                // Auto-play via detached Audio (no DOM audio element = no double-play)
+                const oneShot = new Audio(audioUrl);
                 oneShot.play().catch(err => console.log('Auto-play prevented:', err));
 
             } catch (error) {
@@ -1067,6 +1065,14 @@
             if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault();
                 convertTextToSpeech();
+            }
+        });
+
+        // Replay button - creates fresh Audio each time
+        REPLAY_BTN.addEventListener('click', () => {
+            if (currentAudioUrl) {
+                const audio = new Audio(currentAudioUrl);
+                audio.play().catch(() => {});
             }
         });
 
