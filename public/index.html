@@ -1378,20 +1378,25 @@
                 currentAudioUrl = audioUrl;
                 currentAudioBlob = audioBlob;
                 
-                // Fully clear audio element before loading new source (prevents echo/double play)
+                // Fully clear audio element
                 AUDIO_PLAYER.pause();
                 AUDIO_PLAYER.currentTime = 0;
                 AUDIO_PLAYER.removeAttribute('src');
                 AUDIO_PLAYER.load();
-                
-                // Set new source and show player
-                AUDIO_PLAYER.src = audioUrl;
+
+                // Show player (for download/share) but don't set main player src yet
                 AUDIO_SECTION.classList.add('active');
                 showStatus('Audio generated successfully!', 'success');
 
-                // Auto-play once via fresh Audio instance (avoids double-play on reused element)
+                // Auto-play once via temp Audio; set main player src only after it ends (prevents double play)
                 const tempAudio = new Audio(audioUrl);
-                tempAudio.play().catch(err => console.log('Auto-play prevented:', err));
+                tempAudio.onended = () => {
+                    AUDIO_PLAYER.src = audioUrl;
+                };
+                tempAudio.play().catch(err => {
+                    console.log('Auto-play prevented:', err);
+                    AUDIO_PLAYER.src = audioUrl;
+                });
 
             } catch (error) {
                 console.error('Error:', error);
