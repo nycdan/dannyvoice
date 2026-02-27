@@ -1037,20 +1037,15 @@
                 AUDIO_SECTION.classList.add('active');
                 showStatus('Audio generated successfully!', 'success');
 
-                // Single persistent Audio - wait for canplay then play once
-                if (!autoPlayAudio) autoPlayAudio = new Audio();
+                // Single persistent Audio - preload=none prevents auto-play when src is set
+                if (!autoPlayAudio) {
+                    autoPlayAudio = new Audio();
+                    autoPlayAudio.preload = 'none';
+                }
                 autoPlayAudio.pause();
                 autoPlayAudio.currentTime = 0;
                 autoPlayAudio.src = audioUrl;
-                let played = false;
-                const playOnce = () => {
-                    if (played) return;
-                    played = true;
-                    autoPlayAudio.removeEventListener('canplay', playOnce);
-                    autoPlayAudio.play().catch(err => console.log('Auto-play prevented:', err));
-                };
-                autoPlayAudio.addEventListener('canplay', playOnce, { once: true });
-                if (autoPlayAudio.readyState >= 3) playOnce();
+                autoPlayAudio.play().catch(err => console.log('Auto-play prevented:', err));
 
             } catch (error) {
                 console.error('Error:', error);
