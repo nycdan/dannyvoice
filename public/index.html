@@ -1402,6 +1402,8 @@
                     source.connect(ctx.destination);
                     source.onended = () => {
                         AUDIO_PLAYER.src = audioUrl;
+                        AUDIO_PLAYER.pause();
+                        AUDIO_PLAYER.currentTime = 0;
                         ctx.close();
                     };
                     source.start(0);
