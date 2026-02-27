@@ -1027,42 +1027,14 @@
                 const audioBlob = await response.blob();
                 const audioUrl = URL.createObjectURL(audioBlob);
                 
-                // Revoke previous object URL to prevent double playback
-                if (currentAudioUrl) {
-                    URL.revokeObjectURL(currentAudioUrl);
-                }
+                if (currentAudioUrl) URL.revokeObjectURL(currentAudioUrl);
                 currentAudioUrl = audioUrl;
                 currentAudioBlob = audioBlob;
-                
-                // Fully clear audio element — do NOT set src yet (prevents browser auto-play)
-                AUDIO_PLAYER.pause();
-                AUDIO_PLAYER.currentTime = 0;
-                AUDIO_PLAYER.removeAttribute('src');
-                AUDIO_PLAYER.load();
 
+                AUDIO_PLAYER.src = audioUrl;
                 AUDIO_SECTION.classList.add('active');
                 showStatus('Audio generated successfully!', 'success');
-
-                // Auto-play via Web Audio API; set AUDIO_PLAYER.src only AFTER playback ends
-                try {
-                    const arrayBuffer = await audioBlob.arrayBuffer();
-                    const ctx = new (window.AudioContext || window.webkitAudioContext)();
-                    if (ctx.state === 'suspended') await ctx.resume();
-                    const buffer = await ctx.decodeAudioData(arrayBuffer);
-                    const source = ctx.createBufferSource();
-                    source.buffer = buffer;
-                    source.connect(ctx.destination);
-                    source.onended = () => {
-                        AUDIO_PLAYER.src = audioUrl;
-                        AUDIO_PLAYER.pause();
-                        AUDIO_PLAYER.currentTime = 0;
-                        ctx.close();
-                    };
-                    source.start(0);
-                } catch (err) {
-                    console.log('Web Audio auto-play failed, falling back:', err);
-                    AUDIO_PLAYER.src = audioUrl;
-                }
+                AUDIO_PLAYER.play().catch(err => console.log('Auto-play prevented:', err));
 
             } catch (error) {
                 console.error('Error:', error);

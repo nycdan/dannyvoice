@@ -1,4 +1,4 @@
-const CACHE_NAME = 'danny-voice-v3';
+const CACHE_NAME = 'danny-voice-v4';
 const urlsToCache = [
   '/',
   '/index.html',
@@ -32,12 +32,11 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
+  if (event.request.url.startsWith('blob:')) return;
   event.respondWith(
     caches.match(event.request)
       .then((response) => {
-        // Return cached version or fetch from network
         return response || fetch(event.request).catch(() => {
-          // If fetch fails and it's a navigation request, return the cached index.html
           if (event.request.mode === 'navigate') {
             return caches.match('/index.html');
           }
