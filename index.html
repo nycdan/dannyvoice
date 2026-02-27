@@ -1030,18 +1030,16 @@
                 currentAudioUrl = audioUrl;
                 currentAudioBlob = audioBlob;
                 
-                // Fully clear audio element
+                // Fully clear audio element — do NOT set src yet (prevents browser auto-play)
                 AUDIO_PLAYER.pause();
                 AUDIO_PLAYER.currentTime = 0;
                 AUDIO_PLAYER.removeAttribute('src');
                 AUDIO_PLAYER.load();
 
-                // Show player and set src for replay
-                AUDIO_PLAYER.src = audioUrl;
                 AUDIO_SECTION.classList.add('active');
                 showStatus('Audio generated successfully!', 'success');
 
-                // Auto-play via Web Audio API (one-shot buffer, avoids HTMLAudioElement double-play bug)
+                // Auto-play via Web Audio API; set AUDIO_PLAYER.src only AFTER playback ends
                 try {
                     const arrayBuffer = await audioBlob.arrayBuffer();
                     const ctx = new (window.AudioContext || window.webkitAudioContext)();
@@ -1050,11 +1048,14 @@
                     const source = ctx.createBufferSource();
                     source.buffer = buffer;
                     source.connect(ctx.destination);
+                    source.onended = () => {
+                        AUDIO_PLAYER.src = audioUrl;
+                        ctx.close();
+                    };
                     source.start(0);
                 } catch (err) {
-                    console.log('Web Audio fallback:', err);
-                    const tempAudio = new Audio(audioUrl);
-                    tempAudio.play().catch(() => {});
+                    console.log('Web Audio auto-play failed, falling back:', err);
+                    AUDIO_PLAYER.src = audioUrl;
                 }
 
             } catch (error) {
