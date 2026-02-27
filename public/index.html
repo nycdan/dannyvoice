@@ -32,7 +32,7 @@
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: #1a1a1a;
             min-height: 100vh;
             display: flex;
             justify-content: center;
@@ -41,9 +41,10 @@
         }
 
         .container {
-            background: white;
+            background: #fff;
             border-radius: 20px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            border: 2px solid #333;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
             padding: 40px;
             max-width: 600px;
             width: 100%;
@@ -67,18 +68,24 @@
             margin-bottom: 16px;
             font-size: 1.2rem;
             font-weight: 600;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: #b91c1c;
             color: white;
-            border: none;
+            border: 2px solid #7f1d1d;
             border-radius: 10px;
             cursor: pointer;
             transition: all 0.3s;
-            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+            box-shadow: 0 4px 15px rgba(185, 28, 28, 0.4);
         }
 
         .help-quick-btn:hover {
+            background: #991b1b;
             transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+            box-shadow: 0 6px 20px rgba(185, 28, 28, 0.5);
+        }
+
+        .help-quick-btn:focus {
+            outline: 3px solid #1a1a1a;
+            outline-offset: 2px;
         }
 
         .help-quick-btn:active {
@@ -89,10 +96,10 @@
             margin-top: 24px;
             padding-top: 20px;
             text-align: center;
-            color: #999;
+            color: #595959;
             font-size: 1rem;
             font-weight: 500;
-            border-top: 1px solid #eee;
+            border-top: 2px solid #333;
         }
 
         .version-toggle {
@@ -136,7 +143,7 @@
         .emoji-hint {
             margin-top: 8px;
             font-size: 0.85rem;
-            color: #666;
+            color: #333;
             font-style: italic;
         }
 
@@ -145,10 +152,10 @@
             bottom: 100%;
             left: 0;
             right: 0;
-            background: white;
-            border: 2px solid #e0e0e0;
+            background: #fff;
+            border: 2px solid #333;
             border-radius: 10px;
-            box-shadow: 0 -5px 20px rgba(0,0,0,0.15);
+            box-shadow: 0 -5px 20px rgba(0,0,0,0.25);
             max-height: 180px;
             overflow-y: auto;
             display: none;
@@ -164,7 +171,8 @@
             padding: 10px 15px;
             cursor: pointer;
             font-size: 1rem;
-            border-bottom: 1px solid #f0f0f0;
+            color: #1a1a1a;
+            border-bottom: 1px solid #333;
             transition: background 0.2s;
         }
 
@@ -174,12 +182,12 @@
 
         .suggestion-item:hover,
         .suggestion-item.selected {
-            background: #f0f4ff;
+            background: #e5e7eb;
         }
 
         .suggestion-item .suggestion-type {
             font-size: 0.75rem;
-            color: #999;
+            color: #595959;
             margin-left: 6px;
         }
 
@@ -189,8 +197,8 @@
             right: 15px !important;
             top: auto !important;
             left: auto !important;
-            background: #f0f0f0;
-            border: none;
+            background: #e5e7eb;
+            border: 2px solid #333;
             border-radius: 8px;
             padding: 8px 12px;
             font-size: 1.2rem;
@@ -200,19 +208,24 @@
         }
 
         .emoji-button:hover {
-            background: #e0e0e0;
+            background: #d1d5db;
             transform: scale(1.1);
+        }
+
+        .emoji-button:focus {
+            outline: 3px solid #1a1a1a;
+            outline-offset: 2px;
         }
 
         .emoji-picker {
             position: absolute;
             bottom: 60px;
             right: 0;
-            background: white;
-            border: 2px solid #e0e0e0;
+            background: #fff;
+            border: 2px solid #333;
             border-radius: 10px;
             padding: 15px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
             max-width: 300px;
             max-height: 400px;
             overflow-y: auto;
@@ -231,7 +244,7 @@
         .emoji-category-title {
             font-size: 0.75rem;
             font-weight: 600;
-            color: #666;
+            color: #1a1a1a;
             text-transform: uppercase;
             margin-bottom: 8px;
             letter-spacing: 0.5px;
@@ -244,8 +257,8 @@
         }
 
         .emoji-item {
-            background: #f8f9fa;
-            border: 2px solid transparent;
+            background: #e5e7eb;
+            border: 2px solid #333;
             border-radius: 8px;
             padding: 10px;
             font-size: 1.5rem;
@@ -257,17 +270,22 @@
         }
 
         .emoji-item:hover {
-            background: #e9ecef;
-            border-color: #667eea;
+            background: #d1d5db;
+            border-color: #1a1a1a;
             transform: scale(1.1);
+        }
+
+        .emoji-item:focus {
+            outline: 3px solid #b91c1c;
+            outline-offset: 2px;
         }
 
         .soundboard {
             margin-top: 20px;
             padding: 20px;
-            background: #f8f9fa;
+            background: #f3f4f6;
             border-radius: 10px;
-            border: 2px solid #e0e0e0;
+            border: 2px solid #333;
         }
 
         .soundboard-header {
@@ -286,7 +304,7 @@
 
         .soundboard-toggle {
             font-size: 1.2rem;
-            color: #667eea;
+            color: #1a1a1a;
             transition: transform 0.3s;
         }
 
@@ -302,9 +320,9 @@
 
         .soundboard-chip {
             padding: 12px 18px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border: none;
+            background: #1a1a1a;
+            color: #fff;
+            border: 2px solid #000;
             border-radius: 25px;
             font-size: 0.95rem;
             font-weight: 500;
@@ -317,8 +335,14 @@
         }
 
         .soundboard-chip:hover {
+            background: #333;
             transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .soundboard-chip:focus {
+            outline: 3px solid #b91c1c;
+            outline-offset: 2px;
         }
 
         .soundboard-chip:active {
@@ -326,7 +350,8 @@
         }
 
         .soundboard-chip.playing {
-            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            background: #15803d;
+            border-color: #166534;
             animation: pulse 1.5s ease-in-out infinite;
         }
 
@@ -375,10 +400,11 @@
         .install-prompt {
             margin-bottom: 20px;
             padding: 15px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: #1a1a1a;
             border-radius: 10px;
-            color: white;
-            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+            border: 2px solid #000;
+            color: #fff;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
             display: none;
         }
 
@@ -396,9 +422,9 @@
 
         .install-btn {
             padding: 10px 20px;
-            background: white;
-            color: #667eea;
-            border: none;
+            background: #fff;
+            color: #1a1a1a;
+            border: 2px solid #333;
             border-radius: 8px;
             font-weight: 600;
             cursor: pointer;
@@ -406,14 +432,20 @@
         }
 
         .install-btn:hover {
+            background: #e5e7eb;
             transform: translateY(-2px);
             box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
         }
 
+        .install-btn:focus {
+            outline: 3px solid #b91c1c;
+            outline-offset: 2px;
+        }
+
         .install-close {
             background: transparent;
-            border: none;
-            color: white;
+            border: 2px solid #fff;
+            color: #fff;
             font-size: 24px;
             cursor: pointer;
             padding: 0;
@@ -434,10 +466,11 @@
         .ios-install-prompt {
             margin-bottom: 20px;
             padding: 15px;
-            background: linear-gradient(135deg, #25D366 0%, #20BA5A 100%);
+            background: #15803d;
             border-radius: 10px;
-            color: white;
-            box-shadow: 0 5px 15px rgba(37, 211, 102, 0.3);
+            border: 2px solid #166534;
+            color: #fff;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
             display: none;
         }
 
@@ -491,7 +524,7 @@
         .emotion-map-category-title {
             font-size: 0.85rem;
             font-weight: 600;
-            color: #667eea;
+            color: #1a1a1a;
             text-transform: uppercase;
             margin-bottom: 12px;
             letter-spacing: 0.5px;
@@ -521,28 +554,36 @@
         .emotion-map-tag {
             font-family: 'Courier New', monospace;
             font-size: 0.85rem;
-            color: #666;
-            background: #e9ecef;
+            color: #1a1a1a;
+            background: #e5e7eb;
             padding: 4px 8px;
             border-radius: 4px;
+            border: 1px solid #333;
         }
 
         textarea {
             width: 100%;
             min-height: 300px;
             padding: 15px 50px 50px 15px;
-            border: 2px solid #e0e0e0;
+            border: 2px solid #333;
             border-radius: 10px;
             font-size: 1.25rem;
             font-family: inherit;
+            color: #1a1a1a;
+            background: #fff;
             resize: vertical;
             transition: border-color 0.3s;
             line-height: 1.6;
         }
 
         textarea:focus {
-            outline: none;
-            border-color: #667eea;
+            outline: 3px solid #1a1a1a;
+            outline-offset: 2px;
+            border-color: #333;
+        }
+
+        textarea::placeholder {
+            color: #595959;
         }
 
         .button-group {
@@ -568,13 +609,20 @@
 
         .send-btn {
             flex: 2;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
+            background: #1a1a1a;
+            color: #fff;
+            border: 2px solid #000;
         }
 
         .send-btn:hover:not(:disabled) {
+            background: #333;
             transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .send-btn:focus {
+            outline: 3px solid #b91c1c;
+            outline-offset: 2px;
         }
 
         .send-btn:disabled {
@@ -584,19 +632,26 @@
 
         .clear-btn {
             flex: 1;
-            background: #f0f0f0;
-            color: #333;
+            background: #e5e7eb;
+            color: #1a1a1a;
+            border: 2px solid #333;
         }
 
         .clear-btn:hover {
-            background: #e0e0e0;
+            background: #d1d5db;
+        }
+
+        .clear-btn:focus {
+            outline: 3px solid #1a1a1a;
+            outline-offset: 2px;
         }
 
         .audio-section {
             margin-top: 20px;
             padding: 20px;
-            background: #f8f9fa;
+            background: #f3f4f6;
             border-radius: 10px;
+            border: 2px solid #333;
             display: none;
         }
 
@@ -637,25 +692,37 @@
         }
 
         .download-btn {
-            background: #28a745;
-            color: white;
+            background: #15803d;
+            color: #fff;
+            border: 2px solid #166534;
         }
 
         .download-btn:hover {
-            background: #218838;
+            background: #166534;
             transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(40, 167, 69, 0.3);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .download-btn:focus {
+            outline: 3px solid #1a1a1a;
+            outline-offset: 2px;
         }
 
         .share-btn {
-            background: #25D366;
-            color: white;
+            background: #16a34a;
+            color: #fff;
+            border: 2px solid #15803d;
         }
 
         .share-btn:hover {
-            background: #20BA5A;
+            background: #15803d;
             transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(37, 211, 102, 0.3);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .share-btn:focus {
+            outline: 3px solid #1a1a1a;
+            outline-offset: 2px;
         }
 
         .status {
@@ -671,21 +738,21 @@
         }
 
         .status.success {
-            background: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
+            background: #dcfce7;
+            color: #166534;
+            border: 2px solid #15803d;
         }
 
         .status.error {
-            background: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
+            background: #fee2e2;
+            color: #991b1b;
+            border: 2px solid #b91c1c;
         }
 
         .status.loading {
-            background: #d1ecf1;
-            color: #0c5460;
-            border: 1px solid #bee5eb;
+            background: #e0f2fe;
+            color: #0c4a6e;
+            border: 2px solid #0369a1;
         }
 
         .loading-spinner {
