@@ -816,7 +816,7 @@
 
         <div class="audio-section" id="audioSection">
             <h3>Generated Audio:</h3>
-            <audio id="audioPlayer" controls></audio>
+            <audio id="audioPlayer" controls preload="none"></audio>
             <div class="audio-actions">
                 <button class="download-btn" id="downloadBtn">
                     <span>📥 Download</span>
@@ -1331,7 +1331,7 @@
         async function convertTextToSpeech() {
             if (_ttsRunning) { console.warn('[TTS] blocked duplicate call'); return; }
             _ttsRunning = true;
-            console.log('[TTS] convertTextToSpeech called, build: 20260226a');
+            console.log('[TTS] convertTextToSpeech called, build: 20260226b');
             const text = TEXT_INPUT.value.trim();
 
             if (!text) {
@@ -1379,10 +1379,16 @@
                 currentAudioUrl = audioUrl;
                 currentAudioBlob = audioBlob;
 
+                // Set src on DOM player for replay/download (preload=none prevents auto-load)
+                AUDIO_PLAYER.preload = 'none';
                 AUDIO_PLAYER.src = audioUrl;
                 AUDIO_SECTION.classList.add('active');
                 showStatus('Audio generated successfully!', 'success');
-                AUDIO_PLAYER.play().catch(err => console.log('Auto-play prevented:', err));
+
+                // Auto-play via detached Audio object (not in DOM, can't double-fire)
+                const oneShot = new Audio();
+                oneShot.src = audioUrl;
+                oneShot.play().catch(err => console.log('Auto-play prevented:', err));
 
             } catch (error) {
                 console.error('Error:', error);
