@@ -1388,13 +1388,23 @@
                 AUDIO_SECTION.classList.add('active');
                 showStatus('Audio generated successfully!', 'success');
 
-                // Auto-play once via temp Audio; set main player src only after it ends (prevents double play)
+                // Debug: log playback flow
+                const log = (msg) => console.log('[Audio]', new Date().toISOString().slice(11, 23), msg);
+                log('Creating tempAudio');
                 const tempAudio = new Audio(audioUrl);
+                tempAudio.addEventListener('play', () => log('tempAudio play event'));
+                tempAudio.addEventListener('ended', () => log('tempAudio ended'));
+                tempAudio.addEventListener('playing', () => log('tempAudio playing'));
+                AUDIO_PLAYER.addEventListener('play', () => log('AUDIO_PLAYER play event'), { once: true });
+                AUDIO_PLAYER.addEventListener('playing', () => log('AUDIO_PLAYER playing'), { once: true });
+
                 tempAudio.onended = () => {
+                    log('tempAudio onended - setting AUDIO_PLAYER.src');
                     AUDIO_PLAYER.src = audioUrl;
                 };
+                log('Calling tempAudio.play()');
                 tempAudio.play().catch(err => {
-                    console.log('Auto-play prevented:', err);
+                    log('Auto-play prevented: ' + err);
                     AUDIO_PLAYER.src = audioUrl;
                 });
 
