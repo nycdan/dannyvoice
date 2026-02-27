@@ -853,8 +853,6 @@
         // Store current audio blob for download/share
         let currentAudioBlob = null;
         let currentAudioUrl = null;
-        // Single persistent Audio for auto-play (only one can exist = no double-play)
-        let autoPlayAudio = null;
 
         // Initialize version toggle UI
         function updateVersionUI() {
@@ -1386,15 +1384,8 @@
                 AUDIO_SECTION.classList.add('active');
                 showStatus('Audio generated successfully!', 'success');
 
-                // Single persistent Audio - preload=none prevents auto-play when src is set
-                if (!autoPlayAudio) {
-                    autoPlayAudio = new Audio();
-                    autoPlayAudio.preload = 'none';
-                }
-                autoPlayAudio.pause();
-                autoPlayAudio.currentTime = 0;
-                autoPlayAudio.src = audioUrl;
-                autoPlayAudio.play().catch(err => console.log('Auto-play prevented:', err));
+                // Trigger Replay button (same code path as user click = 1x)
+                REPLAY_BTN.click();
 
             } catch (error) {
                 console.error('Error:', error);
