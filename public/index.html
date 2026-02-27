@@ -817,8 +817,8 @@
         <div class="audio-section" id="audioSection">
             <h3>Generated Audio:</h3>
             <div class="audio-actions">
-                <button class="send-btn" id="replayBtn" style="flex: 2;">
-                    <span>▶ Play</span>
+                <button class="download-btn" id="replayBtn">
+                    <span>🔊 Replay</span>
                 </button>
                 <button class="download-btn" id="downloadBtn">
                     <span>📥 Download</span>
@@ -1382,7 +1382,13 @@
                 currentAudioBlob = audioBlob;
 
                 AUDIO_SECTION.classList.add('active');
-                showStatus('Click ▶ Play to listen', 'success');
+                showStatus('Audio generated successfully!', 'success');
+
+                // Defer to next tick - may prevent double-play from same-tick race
+                setTimeout(() => {
+                    const oneShot = new Audio(audioUrl);
+                    oneShot.play().catch(err => console.log('Auto-play prevented:', err));
+                }, 0);
 
             } catch (error) {
                 console.error('Error:', error);
