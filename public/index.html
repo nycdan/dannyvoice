@@ -1524,19 +1524,9 @@
         // Focus on text input when page loads
         TEXT_INPUT.focus();
 
-        // Register Service Worker for PWA
+        // Unregister service worker (was causing double audio playback)
         if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('/sw.js', { scope: '/' })
-                    .then((reg) => {
-                        logToVercel('info', 'PWA Debug: Service Worker registered successfully', { scope: reg.scope });
-                    })
-                    .catch((err) => {
-                        logToVercel('error', 'PWA Debug: Service Worker registration failed', { error: err.message });
-                    });
-            });
-        } else {
-            logToVercel('info', 'PWA Debug: Service Workers not supported');
+            navigator.serviceWorker.getRegistrations().then(regs => regs.forEach(r => r.unregister()));
         }
 
         // Verify manifest is accessible
