@@ -1036,29 +1036,26 @@
                 AUDIO_PLAYER.removeAttribute('src');
                 AUDIO_PLAYER.load();
 
-                // Show player (for download/share) but don't set main player src yet
+                // Show player and set src for replay
+                AUDIO_PLAYER.src = audioUrl;
                 AUDIO_SECTION.classList.add('active');
                 showStatus('Audio generated successfully!', 'success');
 
-                // Debug: log playback flow
-                const log = (msg) => console.log('[Audio]', new Date().toISOString().slice(11, 23), msg);
-                log('Creating tempAudio');
-                const tempAudio = new Audio(audioUrl);
-                tempAudio.addEventListener('play', () => log('tempAudio play event'));
-                tempAudio.addEventListener('ended', () => log('tempAudio ended'));
-                tempAudio.addEventListener('playing', () => log('tempAudio playing'));
-                AUDIO_PLAYER.addEventListener('play', () => log('AUDIO_PLAYER play event'), { once: true });
-                AUDIO_PLAYER.addEventListener('playing', () => log('AUDIO_PLAYER playing'), { once: true });
-
-                tempAudio.onended = () => {
-                    log('tempAudio onended - setting AUDIO_PLAYER.src');
-                    AUDIO_PLAYER.src = audioUrl;
-                };
-                log('Calling tempAudio.play()');
-                tempAudio.play().catch(err => {
-                    log('Auto-play prevented: ' + err);
-                    AUDIO_PLAYER.src = audioUrl;
-                });
+                // Auto-play via Web Audio API (one-shot buffer, avoids HTMLAudioElement double-play bug)
+                try {
+                    const arrayBuffer = await audioBlob.arrayBuffer();
+                    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                    if (ctx.state === 'suspended') await ctx.resume();
+                    const buffer = await ctx.decodeAudioData(arrayBuffer);
+                    const source = ctx.createBufferSource();
+                    source.buffer = buffer;
+                    source.connect(ctx.destination);
+                    source.start(0);
+                } catch (err) {
+                    console.log('Web Audio fallback:', err);
+                    const tempAudio = new Audio(audioUrl);
+                    tempAudio.play().catch(() => {});
+                }
 
             } catch (error) {
                 console.error('Error:', error);
