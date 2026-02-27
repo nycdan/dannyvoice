@@ -265,6 +265,7 @@
         }
 
         .emotion-map {
+            display: none;
             margin-top: 20px;
             padding: 20px;
             background: #f8f9fa;
@@ -1016,7 +1017,7 @@
         const SOUNDBOARD_CONTENT = document.getElementById('soundboardContent');
         const SOUNDBOARD_TOGGLE = document.getElementById('soundboardToggle');
         
-        let soundboardCollapsed = true;
+        let soundboardCollapsed = false;
         let currentPlayingAudio = null;
         let currentPlayingChip = null;
         
@@ -1213,9 +1214,9 @@
             }
         });
         
-        // Initialize soundboard as collapsed
-        SOUNDBOARD_CONTENT.style.display = 'none';
-        SOUNDBOARD_TOGGLE.classList.add('collapsed');
+        // Initialize soundboard as open by default
+        SOUNDBOARD_CONTENT.style.display = 'grid';
+        SOUNDBOARD_TOGGLE.classList.remove('collapsed');
         renderSoundboard();
 
         // Emotion map toggle functionality
