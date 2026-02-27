@@ -1406,7 +1406,6 @@
         SEND_BTN.addEventListener('click', convertTextToSpeech);
         CLEAR_BTN.addEventListener('click', clearText);
 
-        let currentPlayingAudio = null;
         function playCurrentAudio() {
             if (!currentAudioUrl) return;
             if (currentPlayingAudio) {
