@@ -1327,7 +1327,11 @@
             STATUS.className = 'status';
         }
 
+        let _ttsRunning = false;
         async function convertTextToSpeech() {
+            if (_ttsRunning) { console.warn('[TTS] blocked duplicate call'); return; }
+            _ttsRunning = true;
+            console.log('[TTS] convertTextToSpeech called, build: 20260226a');
             const text = TEXT_INPUT.value.trim();
 
             if (!text) {
@@ -1411,6 +1415,7 @@
                 showStatus(`Error: ${error.message}`, 'error');
             } finally {
                 SEND_BTN.disabled = false;
+                _ttsRunning = false;
             }
         }
 

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'danny-voice-v2';
+const CACHE_NAME = 'danny-voice-v3';
 const urlsToCache = [
   '/',
   '/index.html',
