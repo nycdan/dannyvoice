@@ -653,8 +653,8 @@
         <div class="audio-section" id="audioSection">
             <h3>Generated Audio:</h3>
             <div class="audio-actions">
-                <button class="download-btn" id="replayBtn">
-                    <span>🔊 Replay</span>
+                <button class="send-btn" id="replayBtn" style="flex: 2;">
+                    <span>▶ Play</span>
                 </button>
                 <button class="download-btn" id="downloadBtn">
                     <span>📥 Download</span>
@@ -1034,13 +1034,7 @@
                 currentAudioBlob = audioBlob;
 
                 AUDIO_SECTION.classList.add('active');
-                showStatus('Audio generated successfully!', 'success');
-
-                // Auto-play via detached Audio - wait for canplay to avoid load/play race
-                const oneShot = new Audio(audioUrl);
-                oneShot.addEventListener('canplay', () => {
-                    oneShot.play().catch(err => console.log('Auto-play prevented:', err));
-                }, { once: true });
+                showStatus('Click ▶ Play to listen', 'success');
 
             } catch (error) {
                 console.error('Error:', error);
