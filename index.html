@@ -1036,7 +1036,7 @@
                 AUDIO_SECTION.classList.add('active');
                 showStatus('Audio generated successfully!', 'success');
 
-                _audioGenId++;
+                _autoPlayDone = false;   // reset for new generation
                 playCurrentAudio(true);
 
             } catch (error) {
@@ -1067,24 +1067,20 @@
             }
         });
 
-        let currentPlayingAudio = null;
-        let _audioGenId = 0;        // increments each TTS generation
-        let _lastAutoPlayId = -1;   // which generation was already auto-played
+        // Nuclear: ONE Audio element for the entire page lifetime.
+        // Nothing else can ever play. No second object can exist.
+        const _player = new Audio();
+        let _autoPlayDone = false;
 
         function playCurrentAudio(autoPlay) {
             if (!currentAudioUrl) return;
-            // Silver bullet: only one auto-play per generation
-            if (autoPlay && _audioGenId === _lastAutoPlayId) return;
-            if (autoPlay) _lastAutoPlayId = _audioGenId;
+            if (autoPlay && _autoPlayDone) return;   // already auto-played this generation
+            if (autoPlay) _autoPlayDone = true;       // synchronous flag — no race possible
 
-            if (currentPlayingAudio) {
-                currentPlayingAudio.pause();
-                currentPlayingAudio = null;
-            }
-            const audio = new Audio(currentAudioUrl);
-            currentPlayingAudio = audio;
-            audio.onended = () => { currentPlayingAudio = null; };
-            audio.play().catch(() => { currentPlayingAudio = null; });
+            _player.pause();
+            _player.currentTime = 0;
+            _player.src = currentAudioUrl;
+            _player.play().catch(() => {});
         }
         REPLAY_BTN.addEventListener('click', () => playCurrentAudio(false));
 
