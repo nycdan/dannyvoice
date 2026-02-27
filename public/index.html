@@ -1384,11 +1384,11 @@
                 AUDIO_SECTION.classList.add('active');
                 showStatus('Audio generated successfully!', 'success');
 
-                // Defer to next tick - may prevent double-play from same-tick race
+                // 500ms delay breaks execution chain - test if this fixes double-play
                 setTimeout(() => {
                     const oneShot = new Audio(audioUrl);
                     oneShot.play().catch(err => console.log('Auto-play prevented:', err));
-                }, 0);
+                }, 500);
 
             } catch (error) {
                 console.error('Error:', error);
