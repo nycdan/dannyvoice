@@ -1527,10 +1527,24 @@
         };
 
         const CALLING_PHRASES_DEFAULT = {
-            'Time-buying': ['רגע אחד', 'שנייה בבקשה', 'אני בודק'],
+            'Time-buying': ['רגע אחד', 'שנייה בבקשה', 'אני בודק', 'hi'],
             'Clarification': ['לא הבנתי', 'אתה יכול לחזור על זה?'],
             'Acknowledgement': ['כן', 'בסדר', 'אוקיי'],
             'Flow control': ['כן, אני מקשיב', 'תודה על הסבלנות']
+        };
+
+        const CALLING_PHRASE_MP3S = {
+            'רגע אחד': 'calling-rega-echad.mp3',
+            'שנייה בבקשה': 'calling-shniya-bevakasha.mp3',
+            'אני בודק': 'calling-ani-bodek.mp3',
+            'hi': 'calling-hi.mp3',
+            'לא הבנתי': 'calling-lo-havanti.mp3',
+            'אתה יכול לחזור על זה?': 'calling-ata-yachol-lachazor.mp3',
+            'כן': 'calling-ken.mp3',
+            'בסדר': 'calling-beseder.mp3',
+            'אוקיי': 'calling-okai.mp3',
+            'כן, אני מקשיב': 'calling-ken-ani-makshiv.mp3',
+            'תודה על הסבלנות': 'calling-toda-al-hasavlanut.mp3'
         };
 
         const CALLING_PHRASES_STORAGE_KEY = 'dannyvoice_calling_phrases';
@@ -1784,9 +1798,47 @@
                     }
                 })();
             } else if (type === 'calling') {
-                (async () => {
-                    await speakPhrase(phrase);
-                })();
+                const mp3File = CALLING_PHRASE_MP3S[phrase];
+                if (mp3File) {
+                    if (currentPlayingChip && currentPlayingChip.dataset.phrase === phrase && currentPlayingAudio) {
+                        currentPlayingAudio.pause();
+                        currentPlayingAudio.currentTime = 0;
+                        currentPlayingChip.classList.remove('playing');
+                        currentPlayingAudio = null;
+                        currentPlayingChip = null;
+                        return;
+                    }
+                    _player.pause();
+                    if (currentPlayingAudio) {
+                        currentPlayingAudio.pause();
+                        currentPlayingAudio.currentTime = 0;
+                        if (currentPlayingChip) currentPlayingChip.classList.remove('playing');
+                        currentPlayingAudio = null;
+                        currentPlayingChip = null;
+                    }
+                    const audio = new Audio(`/${mp3File}`);
+                    currentPlayingAudio = audio;
+                    currentPlayingChip = chip;
+                    chip.classList.add('playing');
+                    audio.onended = () => {
+                        if (currentPlayingChip) currentPlayingChip.classList.remove('playing');
+                        currentPlayingAudio = null;
+                        currentPlayingChip = null;
+                    };
+                    audio.onerror = () => {
+                        if (currentPlayingChip) currentPlayingChip.classList.remove('playing');
+                        currentPlayingAudio = null;
+                        currentPlayingChip = null;
+                        speakPhrase(phrase);
+                    };
+                    audio.play().catch(() => {
+                        currentPlayingAudio = null;
+                        currentPlayingChip = null;
+                        speakPhrase(phrase);
+                    });
+                } else {
+                    (async () => { await speakPhrase(phrase); })();
+                }
             }
         });
         
