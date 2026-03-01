@@ -92,6 +92,36 @@
             transform: translateY(0);
         }
 
+        .answer-call-btn {
+            width: 100%;
+            padding: 16px 24px;
+            margin-bottom: 16px;
+            font-size: 1.2rem;
+            font-weight: 600;
+            background: #15803d;
+            color: white;
+            border: 2px solid #166534;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(21, 128, 61, 0.4);
+        }
+
+        .answer-call-btn:hover {
+            background: #166534;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(21, 128, 61, 0.5);
+        }
+
+        .answer-call-btn:focus {
+            outline: 3px solid #1a1a1a;
+            outline-offset: 2px;
+        }
+
+        .answer-call-btn:active {
+            transform: translateY(0);
+        }
+
         .provider-toggle {
             display: flex;
             gap: 8px;
@@ -823,6 +853,7 @@
 <body>
     <div class="container">
         <button class="help-quick-btn" id="helpQuickBtn">I need help</button>
+        <button class="answer-call-btn" id="answerCallBtn">Answer call</button>
 
         <div class="install-prompt" id="installPrompt">
             <div class="install-prompt-content">
@@ -1553,6 +1584,23 @@
         // I need help quick button (top of page)
         document.getElementById('helpQuickBtn').addEventListener('click', () => {
             playSoundboardAudio('i-need-help');
+        });
+
+        // Answer call button - plays phone.wav
+        document.getElementById('answerCallBtn').addEventListener('click', () => {
+            if (currentPlayingAudio) {
+                currentPlayingAudio.pause();
+                currentPlayingAudio.currentTime = 0;
+                currentPlayingAudio = null;
+                if (currentPlayingChip) currentPlayingChip.classList.remove('playing');
+                currentPlayingChip = null;
+            }
+            _player.pause();
+            const audio = new Audio('/phone.wav');
+            currentPlayingAudio = audio;
+            audio.onended = () => { currentPlayingAudio = null; };
+            audio.onerror = () => { currentPlayingAudio = null; };
+            audio.play().catch(() => { currentPlayingAudio = null; });
         });
 
         // Emotion map toggle functionality
