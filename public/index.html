@@ -389,6 +389,44 @@
             gap: 12px;
         }
 
+        .soundboard-content.calling-view {
+            display: block;
+        }
+
+        .soundboard-category {
+            margin-bottom: 16px;
+        }
+
+        .soundboard-category-title {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #595959;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .soundboard-category-chips {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 8px;
+        }
+
+        .soundboard-back-btn {
+            padding: 6px 12px;
+            font-size: 0.85rem;
+            background: #e5e7eb;
+            color: #1a1a1a;
+            border: 2px solid #333;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-bottom: 12px;
+        }
+
+        .soundboard-back-btn:hover {
+            background: #d1d5db;
+        }
+
         .soundboard-chip {
             padding: 12px 18px;
             background: #1a1a1a;
@@ -1437,6 +1475,15 @@
             'im-tired': "I'm tired",
             'im-cold': "I'm cold"
         };
+
+        const CALLING_PHRASES = {
+            'Time-buying': ['רגע אחד', 'שנייה בבקשה', 'אני בודק'],
+            'Clarification': ['לא הבנתי', 'אתה יכול לחזור על זה?'],
+            'Acknowledgement': ['כן', 'בסדר', 'אוקיי'],
+            'Flow control': ['כן, אני מקשיב', 'תודה על הסבלנות']
+        };
+
+        let soundboardMode = 'standard';
         
         // Play soundboard audio
         function playSoundboardAudio(phrase) {
@@ -1516,32 +1563,66 @@
         
         function renderSoundboard() {
             SOUNDBOARD_CONTENT.innerHTML = '';
-            const counts = getPhraseCounts();
-            const dynamicPhrases = Object.entries(counts)
-                .sort((a, b) => b[1] - a[1])
-                .slice(0, MAX_DYNAMIC_PHRASES)
-                .map(([phrase]) => phrase);
-            
-            // Fixed chips (always shown)
-            for (const key of Object.keys(soundboardPhrases)) {
-                const chip = document.createElement('button');
-                chip.className = 'soundboard-chip';
-                chip.dataset.type = 'fixed';
-                chip.dataset.phrase = key;
-                chip.textContent = fixedChipLabels[key] || key;
-                chip.title = fixedChipLabels[key] || key;
-                SOUNDBOARD_CONTENT.appendChild(chip);
-            }
-            
-            // Dynamic chips (most-used phrases)
-            for (const phrase of dynamicPhrases) {
-                const chip = document.createElement('button');
-                chip.className = 'soundboard-chip';
-                chip.dataset.type = 'dynamic';
-                chip.dataset.phrase = phrase;
-                chip.textContent = truncateLabel(phrase, 20);
-                chip.title = phrase;
-                SOUNDBOARD_CONTENT.appendChild(chip);
+            SOUNDBOARD_CONTENT.classList.remove('calling-view');
+
+            if (soundboardMode === 'calling') {
+                SOUNDBOARD_CONTENT.classList.add('calling-view');
+                const backBtn = document.createElement('button');
+                backBtn.className = 'soundboard-back-btn';
+                backBtn.textContent = '← Back to standard';
+                backBtn.addEventListener('click', () => {
+                    soundboardMode = 'standard';
+                    renderSoundboard();
+                });
+                SOUNDBOARD_CONTENT.appendChild(backBtn);
+
+                for (const [category, phrases] of Object.entries(CALLING_PHRASES)) {
+                    const catDiv = document.createElement('div');
+                    catDiv.className = 'soundboard-category';
+                    const title = document.createElement('div');
+                    title.className = 'soundboard-category-title';
+                    title.textContent = category;
+                    catDiv.appendChild(title);
+                    const chipsDiv = document.createElement('div');
+                    chipsDiv.className = 'soundboard-category-chips';
+                    for (const phrase of phrases) {
+                        const chip = document.createElement('button');
+                        chip.className = 'soundboard-chip';
+                        chip.dataset.type = 'calling';
+                        chip.dataset.phrase = phrase;
+                        chip.textContent = phrase;
+                        chip.title = phrase;
+                        chipsDiv.appendChild(chip);
+                    }
+                    catDiv.appendChild(chipsDiv);
+                    SOUNDBOARD_CONTENT.appendChild(catDiv);
+                }
+            } else {
+                const counts = getPhraseCounts();
+                const dynamicPhrases = Object.entries(counts)
+                    .sort((a, b) => b[1] - a[1])
+                    .slice(0, MAX_DYNAMIC_PHRASES)
+                    .map(([phrase]) => phrase);
+
+                for (const key of Object.keys(soundboardPhrases)) {
+                    const chip = document.createElement('button');
+                    chip.className = 'soundboard-chip';
+                    chip.dataset.type = 'fixed';
+                    chip.dataset.phrase = key;
+                    chip.textContent = fixedChipLabels[key] || key;
+                    chip.title = fixedChipLabels[key] || key;
+                    SOUNDBOARD_CONTENT.appendChild(chip);
+                }
+
+                for (const phrase of dynamicPhrases) {
+                    const chip = document.createElement('button');
+                    chip.className = 'soundboard-chip';
+                    chip.dataset.type = 'dynamic';
+                    chip.dataset.phrase = phrase;
+                    chip.textContent = truncateLabel(phrase, 20);
+                    chip.title = phrase;
+                    SOUNDBOARD_CONTENT.appendChild(chip);
+                }
             }
         }
         
@@ -1560,6 +1641,10 @@
                         recordPhrase(phrase);
                         renderSoundboard();
                     }
+                })();
+            } else if (type === 'calling') {
+                (async () => {
+                    await speakPhrase(phrase);
                 })();
             }
         });
@@ -1586,7 +1671,7 @@
             playSoundboardAudio('i-need-help');
         });
 
-        // Answer call button - plays phone.wav
+        // Answer call button - plays phone.wav and switches to calling view
         document.getElementById('answerCallBtn').addEventListener('click', () => {
             if (currentPlayingAudio) {
                 currentPlayingAudio.pause();
@@ -1601,6 +1686,8 @@
             audio.onended = () => { currentPlayingAudio = null; };
             audio.onerror = () => { currentPlayingAudio = null; };
             audio.play().catch(() => { currentPlayingAudio = null; });
+            soundboardMode = 'calling';
+            renderSoundboard();
         });
 
         // Emotion map toggle functionality
