@@ -92,14 +92,55 @@
             transform: translateY(0);
         }
 
-        .app-footer-title {
+        .provider-toggle {
+            display: flex;
+            gap: 8px;
             margin-top: 24px;
             padding-top: 20px;
+            justify-content: center;
+            align-items: center;
+            border-top: 2px solid #333;
+        }
+
+        .provider-toggle-label {
+            font-size: 0.9rem;
+            color: #333;
+            margin-right: 8px;
+        }
+
+        .provider-pill {
+            padding: 8px 16px;
+            border: 2px solid #333;
+            border-radius: 25px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: #e5e7eb;
+            color: #1a1a1a;
+        }
+
+        .provider-pill:hover {
+            background: #d1d5db;
+        }
+
+        .provider-pill.active {
+            background: #1a1a1a;
+            color: #fff;
+            border-color: #000;
+        }
+
+        .provider-pill:focus {
+            outline: 3px solid #b91c1c;
+            outline-offset: 2px;
+        }
+
+        .app-footer-title {
+            margin-top: 12px;
             text-align: center;
             color: #595959;
             font-size: 1rem;
             font-weight: 500;
-            border-top: 2px solid #333;
         }
 
         .version-toggle {
@@ -958,6 +999,11 @@
             </div>
         </div>
 
+        <div class="provider-toggle">
+            <span class="provider-toggle-label">Voice:</span>
+            <button class="provider-pill active" id="providerFineVoice" data-version="2.1">FineVoice</button>
+            <button class="provider-pill" id="providerCartesia" data-version="cartesia">Cartesia</button>
+        </div>
         <h1 class="app-footer-title">Danny Voice</h1>
     </div>
 
@@ -972,8 +1018,26 @@
         const EMOJI_PICKER = document.getElementById('emojiPicker');
         const DOWNLOAD_BTN = document.getElementById('downloadBtn');
         const SHARE_BTN = document.getElementById('shareBtn');
-        // TTS version (FineVoice 2.1 only)
-        let selectedVersion = '2.1';
+        // TTS provider: FineVoice (2.1) or Cartesia
+        let selectedVersion = localStorage.getItem('dannyVoiceVersion') || '2.1';
+        if (selectedVersion !== '2.1' && selectedVersion !== 'cartesia') selectedVersion = '2.1';
+
+        function updateProviderUI() {
+            document.getElementById('providerFineVoice').classList.toggle('active', selectedVersion === '2.1');
+            document.getElementById('providerCartesia').classList.toggle('active', selectedVersion === 'cartesia');
+        }
+        updateProviderUI();
+
+        document.getElementById('providerFineVoice').addEventListener('click', () => {
+            selectedVersion = '2.1';
+            localStorage.setItem('dannyVoiceVersion', '2.1');
+            updateProviderUI();
+        });
+        document.getElementById('providerCartesia').addEventListener('click', () => {
+            selectedVersion = 'cartesia';
+            localStorage.setItem('dannyVoiceVersion', 'cartesia');
+            updateProviderUI();
+        });
 
         // Store current audio blob for download/share
         let currentAudioBlob = null;
@@ -1704,7 +1768,9 @@
             _ttsRunning = true;
             const textWithTags = convertEmojisToTags(text);
             let payload;
-            if (selectedVersion === '2.0') {
+            if (selectedVersion === 'cartesia') {
+                payload = { text: convertToFineVoiceTags(textWithTags), version: 'cartesia' };
+            } else if (selectedVersion === '2.0') {
                 payload = { text: convertToResembleSSML(textWithTags), version: '2.0' };
             } else if (selectedVersion === '2.1') {
                 payload = { text: convertToFineVoiceTags(textWithTags), version: '2.1' };

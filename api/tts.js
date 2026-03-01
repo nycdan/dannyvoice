@@ -11,8 +11,8 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'Text is required' });
   }
 
-  if (version !== '1.0' && version !== '2.0' && version !== '2.1') {
-    return res.status(400).json({ error: 'Version must be "1.0", "2.0", or "2.1"' });
+  if (version !== '1.0' && version !== '2.0' && version !== '2.1' && version !== 'cartesia') {
+    return res.status(400).json({ error: 'Version must be "1.0", "2.0", "2.1", or "cartesia"' });
   }
 
   const trimmedText = text.trim();
@@ -22,6 +22,9 @@ export default async function handler(req, res) {
   }
   if (version === '2.1') {
     return handleFineVoice(req, res, trimmedText);
+  }
+  if (version === 'cartesia') {
+    return handleCartesia(req, res, trimmedText);
   }
 
   return handleResemble(req, res, trimmedText);
@@ -243,6 +246,52 @@ async function handleFineVoice(req, res, text) {
     return res.send(Buffer.from(audioBuffer));
   } catch (error) {
     console.error('Error calling FineVoice API:', error);
+    return res.status(500).json({ error: 'Failed to generate speech: ' + error.message });
+  }
+}
+
+async function handleCartesia(req, res, text) {
+  const apiKey = process.env.CARTESIA_API_KEY;
+  const voiceId = process.env.CARTESIA_VOICE_ID || 'a0e99841-438c-4a64-b679-ae501e7d6091';
+
+  if (!apiKey) {
+    return res.status(500).json({ error: 'Cartesia API key not configured' });
+  }
+
+  const hasHebrew = /[\u0590-\u05FF]/.test(text);
+  const language = hasHebrew ? 'he' : 'en';
+
+  try {
+    const response = await fetch('https://api.cartesia.ai/tts/bytes', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Cartesia-Version': '2025-04-16',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        model_id: 'sonic-3',
+        transcript: text,
+        voice: { mode: 'id', id: voiceId },
+        output_format: { container: 'mp3', sample_rate: 44100, bit_rate: 128000 },
+        language
+      })
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      const message = errorData.detail || errorData.message || `Cartesia API error: ${response.statusText}`;
+      return res.status(response.status).json({ error: message });
+    }
+
+    const audioBuffer = await response.arrayBuffer();
+
+    res.setHeader('Content-Type', 'audio/mpeg');
+    res.setHeader('Content-Length', audioBuffer.byteLength);
+
+    return res.send(Buffer.from(audioBuffer));
+  } catch (error) {
+    console.error('Error calling Cartesia API:', error);
     return res.status(500).json({ error: 'Failed to generate speech: ' + error.message });
   }
 }
