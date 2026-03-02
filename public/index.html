@@ -936,6 +936,50 @@
                 top: auto !important;
             }
         }
+
+        /* Full screen on web (desktop); mobile keeps centered card layout */
+        @media (min-width: 769px) {
+            html, body {
+                height: 100%;
+                overflow: hidden;
+            }
+            body {
+                padding: 0;
+                align-items: stretch;
+                justify-content: stretch;
+            }
+            .container {
+                max-width: none;
+                width: 100%;
+                min-height: 100vh;
+                height: 100%;
+                border-radius: 0;
+                border: none;
+                box-shadow: none;
+                padding: 24px 32px;
+                display: flex;
+                flex-direction: column;
+                overflow: auto;
+            }
+            .container > .help-quick-btn,
+            .container > .answer-call-btn,
+            .container > .input-section,
+            .container > .button-group,
+            .container > .provider-toggle,
+            .container > .app-footer-title {
+                flex-shrink: 0;
+            }
+            .soundboard {
+                flex: 1;
+                min-height: 0;
+                display: flex;
+                flex-direction: column;
+            }
+            .soundboard-content {
+                flex: 1;
+                overflow-y: auto;
+            }
+        }
     </style>
 </head>
 <body>
