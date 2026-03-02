@@ -390,11 +390,44 @@
         }
 
         .soundboard-content.calling-view {
-            display: block;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .calling-nav {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            align-items: center;
         }
 
         .soundboard-category {
             margin-bottom: 16px;
+        }
+
+        .soundboard-content.calling-view .soundboard-category {
+            margin-bottom: 0;
+        }
+
+        .calling-categories {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        @media (min-width: 600px) {
+            .calling-categories {
+                display: grid;
+                grid-template-columns: repeat(2, 1fr);
+                gap: 20px 24px;
+            }
+        }
+
+        @media (min-width: 900px) {
+            .calling-categories {
+                grid-template-columns: repeat(4, 1fr);
+            }
         }
 
         .soundboard-category-title {
@@ -407,20 +440,20 @@
         }
 
         .soundboard-category-chips {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            display: flex;
+            flex-wrap: wrap;
             gap: 8px;
         }
 
         .soundboard-back-btn {
-            padding: 6px 12px;
+            padding: 8px 14px;
             font-size: 0.85rem;
             background: #e5e7eb;
             color: #1a1a1a;
             border: 2px solid #333;
             border-radius: 8px;
             cursor: pointer;
-            margin-bottom: 12px;
+            margin: 0;
         }
 
         .soundboard-back-btn:hover {
@@ -453,7 +486,7 @@
 
         .soundboard-chip-wrap {
             position: relative;
-            display: inline-block;
+            flex-shrink: 0;
         }
 
         .soundboard-chip-remove {
@@ -1714,6 +1747,8 @@
 
             if (soundboardMode === 'calling') {
                 SOUNDBOARD_CONTENT.classList.add('calling-view');
+                const nav = document.createElement('div');
+                nav.className = 'calling-nav';
                 const backBtn = document.createElement('button');
                 backBtn.className = 'soundboard-back-btn';
                 backBtn.textContent = '← Back to standard';
@@ -1722,17 +1757,17 @@
                     callingEditMode = false;
                     renderSoundboard();
                 });
-                SOUNDBOARD_CONTENT.appendChild(backBtn);
+                nav.appendChild(backBtn);
 
                 const editBtn = document.createElement('button');
                 editBtn.className = 'soundboard-back-btn';
                 editBtn.textContent = callingEditMode ? 'Done editing' : 'Edit phrases';
-                editBtn.style.marginLeft = '8px';
                 editBtn.addEventListener('click', () => {
                     callingEditMode = !callingEditMode;
                     renderSoundboard();
                 });
-                SOUNDBOARD_CONTENT.appendChild(editBtn);
+                nav.appendChild(editBtn);
+                SOUNDBOARD_CONTENT.appendChild(nav);
 
                 const callingPhrases = getCallingPhrases();
                 const categories = Object.keys(callingPhrases);
@@ -1770,6 +1805,9 @@
                     addRow.appendChild(addBtn);
                     SOUNDBOARD_CONTENT.appendChild(addRow);
                 }
+
+                const categoriesWrap = document.createElement('div');
+                categoriesWrap.className = 'calling-categories';
 
                 for (const [category, phrases] of Object.entries(callingPhrases)) {
                     const catDiv = document.createElement('div');
@@ -1811,8 +1849,9 @@
                         chipsDiv.appendChild(wrap);
                     }
                     catDiv.appendChild(chipsDiv);
-                    SOUNDBOARD_CONTENT.appendChild(catDiv);
+                    categoriesWrap.appendChild(catDiv);
                 }
+                SOUNDBOARD_CONTENT.appendChild(categoriesWrap);
             } else {
                 const counts = getPhraseCounts();
                 const dynamicPhrases = Object.entries(counts)
