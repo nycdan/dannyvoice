@@ -937,7 +937,7 @@
             }
         }
 
-        /* Full screen on web (desktop); mobile keeps centered card layout */
+        /* Full screen on web (desktop); two-column layout; mobile keeps centered card */
         @media (min-width: 769px) {
             html, body {
                 height: 100%;
@@ -957,33 +957,49 @@
                 border: none;
                 box-shadow: none;
                 padding: 24px 32px;
+                display: grid;
+                grid-template-columns: minmax(320px, 420px) 1fr;
+                grid-template-rows: 1fr;
+                gap: 32px;
+                overflow: hidden;
+            }
+            .compose-column {
+                grid-column: 1;
                 display: flex;
                 flex-direction: column;
-                overflow: auto;
+                gap: 16px;
+                min-height: 0;
+                overflow-y: auto;
             }
-            .container > .help-quick-btn,
-            .container > .answer-call-btn,
-            .container > .input-section,
-            .container > .button-group,
-            .container > .provider-toggle,
-            .container > .app-footer-title {
-                flex-shrink: 0;
+            .container .emotion-map,
+            .container .status,
+            .container .audio-section,
+            .container .provider-toggle,
+            .container .app-footer-title {
+                grid-column: 1;
             }
-            .soundboard {
-                flex: 1;
+            .container .soundboard {
+                grid-column: 2;
+                grid-row: 1 / -1;
+                margin-top: 0;
                 min-height: 0;
                 display: flex;
                 flex-direction: column;
+                overflow: hidden;
             }
-            .soundboard-content {
+            .container .soundboard-content {
                 flex: 1;
                 overflow-y: auto;
+            }
+            .compose-column textarea {
+                min-height: 140px;
             }
         }
     </style>
 </head>
 <body>
     <div class="container">
+        <div class="compose-column">
         <button class="help-quick-btn" id="helpQuickBtn">I need help</button>
         <button class="answer-call-btn" id="answerCallBtn">Answer call</button>
 
@@ -1036,6 +1052,7 @@
                 <span>Send</span>
             </button>
             <button class="clear-btn" id="clearBtn">Clear</button>
+        </div>
         </div>
 
         <div class="soundboard">
