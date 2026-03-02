@@ -64,8 +64,8 @@
 
         .help-quick-btn {
             width: 100%;
-            padding: 16px 24px;
-            margin-bottom: 16px;
+            padding: 8px 24px;
+            margin-bottom: 8px;
             font-size: 1.2rem;
             font-weight: 600;
             background: #b91c1c;
@@ -94,8 +94,8 @@
 
         .answer-call-btn {
             width: 100%;
-            padding: 16px 24px;
-            margin-bottom: 16px;
+            padding: 8px 24px;
+            margin-bottom: 8px;
             font-size: 1.2rem;
             font-weight: 600;
             background: #15803d;
@@ -395,22 +395,8 @@
             gap: 16px;
         }
 
-        .calling-nav {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-            align-items: center;
-        }
-
-        .soundboard-category {
-            margin-bottom: 16px;
-        }
-
-        .soundboard-content.calling-view .soundboard-category {
-            margin-bottom: 0;
-        }
-
         .calling-categories {
+            flex: 1;
             display: flex;
             flex-direction: column;
             gap: 20px;
@@ -430,6 +416,10 @@
             }
         }
 
+        .soundboard-category {
+            margin-bottom: 0;
+        }
+
         .soundboard-category-title {
             font-size: 0.85rem;
             font-weight: 600;
@@ -439,10 +429,30 @@
             letter-spacing: 0.5px;
         }
 
-        .soundboard-category-chips {
+        .soundboard-content.calling-view .soundboard-category-chips {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            width: 100%;
+        }
+
+        .soundboard-content.calling-view .soundboard-chip-wrap {
+            width: 100%;
+        }
+
+        .soundboard-content.calling-view .soundboard-chip {
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .calling-nav {
             display: flex;
             flex-wrap: wrap;
             gap: 8px;
+            align-items: center;
+            margin-top: auto;
+            padding-top: 16px;
+            border-top: 2px solid #333;
         }
 
         .soundboard-back-btn {
@@ -755,7 +765,7 @@
 
         textarea {
             width: 100%;
-            min-height: 300px;
+            min-height: 350px;
             padding: 15px 50px 50px 15px;
             border: 2px solid #333;
             border-radius: 10px;
@@ -1025,7 +1035,7 @@
                 overflow-y: auto;
             }
             .compose-column textarea {
-                min-height: 140px;
+                min-height: 200px;
             }
         }
     </style>
@@ -1767,7 +1777,6 @@
                     renderSoundboard();
                 });
                 nav.appendChild(editBtn);
-                SOUNDBOARD_CONTENT.appendChild(nav);
 
                 const callingPhrases = getCallingPhrases();
                 const categories = Object.keys(callingPhrases);
@@ -1852,6 +1861,7 @@
                     categoriesWrap.appendChild(catDiv);
                 }
                 SOUNDBOARD_CONTENT.appendChild(categoriesWrap);
+                SOUNDBOARD_CONTENT.appendChild(nav);
             } else {
                 const counts = getPhraseCounts();
                 const dynamicPhrases = Object.entries(counts)
