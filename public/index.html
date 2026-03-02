@@ -471,27 +471,36 @@
         }
 
         .soundboard-edit-row {
-            display: flex;
+            display: grid;
+            grid-template-columns: 1fr auto auto;
             gap: 8px;
             align-items: center;
-            margin-bottom: 12px;
-            flex-wrap: wrap;
+            padding: 12px;
+            background: rgba(0,0,0,0.04);
+            border-radius: 8px;
+            border: 1px solid rgba(0,0,0,0.1);
+        }
+
+        @media (max-width: 480px) {
+            .soundboard-edit-row {
+                grid-template-columns: 1fr;
+            }
         }
 
         .soundboard-add-input {
-            flex: 1;
-            min-width: 120px;
-            padding: 8px 12px;
+            min-width: 0;
+            padding: 10px 12px;
             border: 2px solid #333;
             border-radius: 8px;
             font-size: 1rem;
         }
 
         .soundboard-add-select {
-            padding: 8px 12px;
+            padding: 10px 12px;
             border: 2px solid #333;
             border-radius: 8px;
             font-size: 0.9rem;
+            min-width: 140px;
         }
 
         .soundboard-chip-wrap {
@@ -1781,40 +1790,6 @@
                 const callingPhrases = getCallingPhrases();
                 const categories = Object.keys(callingPhrases);
 
-                if (callingEditMode) {
-                    const addRow = document.createElement('div');
-                    addRow.className = 'soundboard-edit-row';
-                    const addInput = document.createElement('input');
-                    addInput.className = 'soundboard-add-input';
-                    addInput.placeholder = 'New phrase...';
-                    addInput.type = 'text';
-                    const addSelect = document.createElement('select');
-                    addSelect.className = 'soundboard-add-select';
-                    categories.forEach(cat => {
-                        const opt = document.createElement('option');
-                        opt.value = cat;
-                        opt.textContent = cat;
-                        addSelect.appendChild(opt);
-                    });
-                    const addBtn = document.createElement('button');
-                    addBtn.className = 'soundboard-back-btn';
-                    addBtn.textContent = '+ Add';
-                    addBtn.addEventListener('click', () => {
-                        const text = addInput.value.trim();
-                        if (!text) return;
-                        const cat = addSelect.value;
-                        if (!callingPhrases[cat]) callingPhrases[cat] = [];
-                        callingPhrases[cat].push(text);
-                        saveCallingPhrases(callingPhrases);
-                        addInput.value = '';
-                        renderSoundboard();
-                    });
-                    addRow.appendChild(addInput);
-                    addRow.appendChild(addSelect);
-                    addRow.appendChild(addBtn);
-                    SOUNDBOARD_CONTENT.appendChild(addRow);
-                }
-
                 const categoriesWrap = document.createElement('div');
                 categoriesWrap.className = 'calling-categories';
 
@@ -1861,6 +1836,41 @@
                     categoriesWrap.appendChild(catDiv);
                 }
                 SOUNDBOARD_CONTENT.appendChild(categoriesWrap);
+
+                if (callingEditMode) {
+                    const addRow = document.createElement('div');
+                    addRow.className = 'soundboard-edit-row';
+                    const addInput = document.createElement('input');
+                    addInput.className = 'soundboard-add-input';
+                    addInput.placeholder = 'New phrase...';
+                    addInput.type = 'text';
+                    const addSelect = document.createElement('select');
+                    addSelect.className = 'soundboard-add-select';
+                    categories.forEach(cat => {
+                        const opt = document.createElement('option');
+                        opt.value = cat;
+                        opt.textContent = cat;
+                        addSelect.appendChild(opt);
+                    });
+                    const addBtn = document.createElement('button');
+                    addBtn.className = 'soundboard-back-btn';
+                    addBtn.textContent = '+ Add';
+                    addBtn.addEventListener('click', () => {
+                        const text = addInput.value.trim();
+                        if (!text) return;
+                        const cat = addSelect.value;
+                        if (!callingPhrases[cat]) callingPhrases[cat] = [];
+                        callingPhrases[cat].push(text);
+                        saveCallingPhrases(callingPhrases);
+                        addInput.value = '';
+                        renderSoundboard();
+                    });
+                    addRow.appendChild(addInput);
+                    addRow.appendChild(addSelect);
+                    addRow.appendChild(addBtn);
+                    SOUNDBOARD_CONTENT.appendChild(addRow);
+                }
+
                 SOUNDBOARD_CONTENT.appendChild(nav);
             } else {
                 const counts = getPhraseCounts();
